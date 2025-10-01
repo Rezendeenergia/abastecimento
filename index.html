@@ -1,0 +1,3379 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Rezende Energia - Gestão de Abastecimento</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #F7931E 0%, #ff6b35 50%, #d4761a 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #F7931E 0%, #ff6b35 50%, #d4761a 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #F7931E 0%, #ff6b35 100%);
+            border-radius: 15px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-logo::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            width: 40px;
+            height: 40px;
+            background: white;
+            clip-path: polygon(0% 0%, 70% 0%, 100% 30%, 100% 100%, 30% 100%, 0% 70%);
+        }
+
+        .login-logo::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            width: 32px;
+            height: 32px;
+            background: #1a1a1a;
+            clip-path: polygon(30% 0%, 100% 0%, 100% 70%, 70% 100%, 0% 100%, 0% 30%);
+            z-index: 1;
+        }
+
+        .login-title {
+            font-size: 1.8em;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .login-subtitle {
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+
+        .role-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .role-btn {
+            background: linear-gradient(135deg, #F7931E 0%, #ff6b35 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(247, 147, 30, 0.3);
+        }
+
+        .role-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(247, 147, 30, 0.4);
+        }
+
+        .role-btn.supervisor {
+            background: linear-gradient(135deg, #1a1a1a 0%, #404040 100%);
+            box-shadow: 0 4px 12px rgba(26, 26, 26, 0.3);
+        }
+
+        .role-btn.supervisor:hover {
+            box-shadow: 0 8px 25px rgba(26, 26, 26, 0.4);
+        }
+
+        /* Supervisor Login Form */
+        .supervisor-login {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-group input {
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #F7931E;
+            box-shadow: 0 0 0 3px rgba(247, 147, 30, 0.1);
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #F7931E 0%, #ff6b35 50%, #d4761a 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(247, 147, 30, 0.2);
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-icon::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #F7931E 0%, #ff6b35 100%);
+            clip-path: polygon(0% 0%, 70% 0%, 100% 30%, 100% 100%, 30% 100%, 0% 70%);
+        }
+
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            width: 24px;
+            height: 24px;
+            background: #1a1a1a;
+            clip-path: polygon(30% 0%, 100% 0%, 100% 70%, 70% 100%, 0% 100%, 0% 30%);
+            z-index: 1;
+        }
+
+        .logo h1 {
+            font-size: 1.8em;
+            font-weight: bold;
+            position: relative;
+            z-index: 2;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .user-role {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Navigation */
+        .nav-bar {
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0;
+            display: flex;
+            overflow-x: auto;
+        }
+
+        .nav-item {
+            padding: 15px 25px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .nav-item:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .nav-item.active {
+            background: white;
+            border-bottom-color: #F7931E;
+            color: #F7931E;
+        }
+
+        .nav-item.hidden {
+            display: none;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            background: #f8fafc;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .card-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Buttons */
+        .btn {
+            background: linear-gradient(135deg, #F7931E 0%, #ff6b35 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(247, 147, 30, 0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(247, 147, 30, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.2);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        /* Form Grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #F7931E;
+            box-shadow: 0 0 0 3px rgba(247, 147, 30, 0.1);
+        }
+
+        /* Status badges */
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: linear-gradient(135deg, #F7931E 0%, #ff6b35 100%);
+            color: white;
+        }
+
+        .status-signed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-fueled {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-completed {
+            background: linear-gradient(135deg, #1a1a1a 0%, #404040 100%);
+            color: white;
+        }
+
+        .status-rejected {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        /* Stats grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            border-left: 5px solid;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+        }
+
+        .stat-card.pending {
+            border-left-color: #F7931E;
+            background: linear-gradient(135deg, rgba(247, 147, 30, 0.05) 0%, rgba(255, 107, 53, 0.05) 100%);
+        }
+        .stat-card.signed {
+            border-left-color: #10b981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.05) 100%);
+        }
+        .stat-card.fueled {
+            border-left-color: #3b82f6;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(37, 99, 235, 0.05) 100%);
+        }
+        .stat-card.completed {
+            border-left-color: #1a1a1a;
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.05) 0%, rgba(64, 64, 64, 0.05) 100%);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-card.pending .stat-number { color: #F7931E; }
+        .stat-card.signed .stat-number { color: #10b981; }
+        .stat-card.fueled .stat-number { color: #3b82f6; }
+        .stat-card.completed .stat-number { color: #1a1a1a; }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .action-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-top: 4px solid #F7931E;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(247, 147, 30, 0.15);
+        }
+
+        .action-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            color: #F7931E;
+        }
+
+        .action-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .action-desc {
+            color: #64748b;
+            font-size: 0.9em;
+        }
+
+        /* Process Flow */
+        .process-flow {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+
+        .flow-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .flow-header h3 {
+            color: #1e293b;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .flow-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .flow-step {
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+            position: relative;
+        }
+
+        .step-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            color: white;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-1 .step-icon { background: linear-gradient(135deg, #F7931E, #ff6b35); }
+        .step-2 .step-icon { background: linear-gradient(135deg, #10b981, #059669); }
+        .step-3 .step-icon { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .step-4 .step-icon { background: linear-gradient(135deg, #1a1a1a, #404040); }
+
+        .step-title {
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        .step-desc {
+            color: #64748b;
+            font-size: 0.9em;
+        }
+
+        .flow-arrow {
+            font-size: 1.5em;
+            color: #F7931E;
+            margin: 0 10px;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+            z-index: 1001;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        }
+
+        .notification.warning {
+            background: linear-gradient(135deg, #F7931E 0%, #ff6b35 100%);
+            box-shadow: 0 10px 25px rgba(247, 147, 30, 0.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 15px;
+            }
+
+            .header {
+                padding: 15px;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .flow-steps {
+                flex-direction: column;
+            }
+
+            .flow-arrow {
+                transform: rotate(90deg);
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-card">
+            <div class="login-logo"></div>
+            <h2 class="login-title">Rezende Energia</h2>
+            <p class="login-subtitle">Sistema de Gestão de Abastecimento</p>
+
+            <div class="role-buttons" id="role-selection">
+                <button class="role-btn" onclick="loginAsDriver()">🚛 Entrar como Motorista</button>
+                <button class="role-btn supervisor" onclick="showSupervisorLogin()">👨‍💼 Entrar como Supervisor</button>
+            </div>
+
+            <div class="supervisor-login" id="supervisor-login">
+                <div class="form-group">
+                    <label>Usuário:</label>
+                    <input type="text" id="supervisor-username" placeholder="Digite seu usuário">
+                </div>
+                <div class="form-group">
+                    <label>Senha:</label>
+                    <input type="password" id="supervisor-password" placeholder="Digite sua senha">
+                </div>
+                <button class="role-btn supervisor" onclick="loginAsSupervisor()">Entrar</button>
+                <button class="role-btn" style="margin-top: 10px; background: #64748b;" onclick="backToRoleSelection()">Voltar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="main-app" style="display: none;">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon"></div>
+                <div>
+                    <h1>Rezende Energia</h1>
+                    <p style="font-size: 0.9em; opacity: 0.9;">Sistema de Gestão de Abastecimento</p>
+                </div>
+            </div>
+            <div class="user-info">
+                <span class="user-role" id="user-role-display"></span>
+                <span>|</span>
+                <span id="current-date"></span>
+                <button class="logout-btn" onclick="logout()">Sair</button>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-bar">
+            <div class="nav-item active" onclick="showScreen('dashboard')">📊 Dashboard</div>
+            <div class="nav-item" onclick="showScreen('requests')">📋 Requisições</div>
+            <div class="nav-item hidden" id="nav-fuel-records" onclick="showScreen('fuel-records')">⛽ Registro de Abastecimento</div>
+            <div class="nav-item hidden" id="nav-fuel-prices" onclick="showScreen('fuel-prices')">💰 Preços Combustíveis</div>
+            <div class="nav-item hidden" id="nav-vehicles" onclick="showScreen('vehicles')">🚚 Veículos</div>
+            <div class="nav-item hidden" id="nav-reports" onclick="showScreen('reports')">📈 Relatórios</div>
+            <div class="nav-item hidden" id="nav-settings" onclick="showScreen('settings')">⚙️ Configurações</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Screen -->
+            <div id="dashboard" class="screen active">
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <div class="action-card" onclick="newRequest()">
+                        <div class="action-icon">📋</div>
+                        <div class="action-title">Nova Requisição</div>
+                        <div class="action-desc">Solicitar abastecimento de veículo</div>
+                    </div>
+                    <div class="action-card" onclick="showScreen('reports')" id="action-reports" style="display: none;">
+                        <div class="action-icon">📊</div>
+                        <div class="action-title">Relatórios</div>
+                        <div class="action-desc">Consultar dados e estatísticas</div>
+                    </div>
+                    <div class="action-card" onclick="exportToExcel('all')" id="action-export" style="display: none;">
+                        <div class="action-icon">📊</div>
+                        <div class="action-title">Exportar Completo</div>
+                        <div class="action-desc">Gerar Excel com todas as abas</div>
+                    </div>
+                </div>
+
+                <!-- Process Flow -->
+                <div class="process-flow">
+                    <div class="flow-header">
+                        <h3>Fluxo do Processo de Abastecimento</h3>
+                        <p>Acompanhe cada etapa do processo</p>
+                    </div>
+                    <div class="flow-steps">
+                        <div class="flow-step step-1">
+                            <div class="step-icon">📋</div>
+                            <div class="step-title">Criar Requisição</div>
+                            <div class="step-desc">Motorista solicita abastecimento</div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step step-2">
+                            <div class="step-icon">✍️</div>
+                            <div class="step-title">Aprovação</div>
+                            <div class="step-desc">Supervisor autoriza ou rejeita</div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step step-3">
+                            <div class="step-icon">⛽</div>
+                            <div class="step-title">Abastecimento</div>
+                            <div class="step-desc">Processo de abastecimento</div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step step-4">
+                            <div class="step-icon">✅</div>
+                            <div class="step-title">Finalização</div>
+                            <div class="step-desc">Processo concluído</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid" id="stats-grid">
+                    <div class="stat-card pending" onclick="filterByStatus('pending')">
+                        <div class="stat-number" id="stat-pending">0</div>
+                        <div class="stat-label">Requisições Pendentes</div>
+                    </div>
+                    <div class="stat-card signed" onclick="filterByStatus('signed')">
+                        <div class="stat-number" id="stat-signed">0</div>
+                        <div class="stat-label">Aprovadas</div>
+                    </div>
+                    <div class="stat-card fueled" onclick="filterByStatus('fueled')">
+                        <div class="stat-number" id="stat-fueled">0</div>
+                        <div class="stat-label">Abastecimentos</div>
+                    </div>
+                    <div class="stat-card completed" onclick="filterByStatus('completed')">
+                        <div class="stat-number" id="stat-completed">0</div>
+                        <div class="stat-label">Completas</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">📋 Atividades Recentes</div>
+                        <button class="btn" onclick="showScreen('requests')">Ver Todas</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Motorista</th>
+                                    <th>Veículo</th>
+                                    <th>Cidade</th>
+                                    <th>Status</th>
+                                    <th>Data</th>
+                                    <th>Valor Est.</th>
+                                    <th id="actions-header">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-activities">
+                                <!-- Preenchido via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Requests Screen -->
+            <div id="requests" class="screen">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">📋 Gestão de Requisições</div>
+                        <div>
+                            <button class="btn" onclick="newRequest()">➕ Nova Requisição</button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="form-grid" id="filters-section">
+                        <div class="form-group">
+                            <label>Status:</label>
+                            <select id="filter-status" onchange="filterRequests()">
+                                <option value="">Todos</option>
+                                <option value="pending">Pendente</option>
+                                <option value="signed">Aprovado</option>
+                                <option value="rejected">Rejeitado</option>
+                                <option value="fueled">Abastecido</option>
+                                <option value="completed">Completo</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Motorista:</label>
+                            <select id="filter-driver" onchange="filterRequests()">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Data Inicial:</label>
+                            <input type="date" id="filter-start-date" onchange="filterRequests()">
+                        </div>
+                        <div class="form-group">
+                            <label>Data Final:</label>
+                            <input type="date" id="filter-end-date" onchange="filterRequests()">
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Motorista</th>
+                                    <th>Veículo</th>
+                                    <th>Cidade</th>
+                                    <th>Posto</th>
+                                    <th>Combustível</th>
+                                    <th>Status</th>
+                                    <th>Data Requisição</th>
+                                    <th>Supervisor</th>
+                                    <th>Valor Est.</th>
+                                    <th>KM</th>
+                                    <th id="requests-actions-header">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-requests">
+                                <!-- Preenchido via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fuel Records Screen (Supervisor only) -->
+            <div id="fuel-records" class="screen">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">⛽ Registro de Abastecimento</div>
+                        <div>
+                            <button class="btn btn-secondary" onclick="exportToExcel('fuel-records')">📊 Exportar Excel</button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Status:</label>
+                            <select id="filter-fuel-status" onchange="filterFuelRecords()">
+                                <option value="">Todos</option>
+                                <option value="pending">Pendente</option>
+                                <option value="completed">Finalizado</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Motorista:</label>
+                            <select id="filter-fuel-driver" onchange="filterFuelRecords()">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Data Inicial:</label>
+                            <input type="date" id="filter-fuel-start-date" onchange="filterFuelRecords()">
+                        </div>
+                        <div class="form-group">
+                            <label>Data Final:</label>
+                            <input type="date" id="filter-fuel-end-date" onchange="filterFuelRecords()">
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID Requisição</th>
+                                    <th>Motorista</th>
+                                    <th>Veículo</th>
+                                    <th>Posto</th>
+                                    <th>Combustível</th>
+                                    <th>Litros</th>
+                                    <th>Preço Unitário</th>
+                                    <th>Preço Total</th>
+                                    <th>Valor Real</th>
+                                    <th>Status</th>
+                                    <th>Data</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fuel-records-list">
+                                <!-- Preenchido via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fuel Prices Screen (Supervisor only) -->
+            <div id="fuel-prices" class="screen">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">💰 Gerenciamento de Preços de Combustíveis</div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Diesel S10 (R$/L):</label>
+                            <input type="number" id="price-diesel-s10" placeholder="6.49" step="0.01" value="6.49">
+                        </div>
+                        <div class="form-group">
+                            <label>Diesel Comum (R$/L):</label>
+                            <input type="number" id="price-diesel-comum" placeholder="6.29" step="0.01" value="6.29">
+                        </div>
+                        <div class="form-group">
+                            <label>Gasolina Comum (R$/L):</label>
+                            <input type="number" id="price-gasolina-comum" placeholder="5.89" step="0.01" value="5.89">
+                        </div>
+                        <div class="form-group">
+                            <label>Gasolina Aditivada (R$/L):</label>
+                            <input type="number" id="price-gasolina-aditivada" placeholder="6.19" step="0.01" value="6.19">
+                        </div>
+                        <div class="form-group">
+                            <label>Etanol (R$/L):</label>
+                            <input type="number" id="price-etanol" placeholder="4.29" step="0.01" value="4.29">
+                        </div>
+                        <div class="form-group">
+                            <label>GNV (R$/m³):</label>
+                            <input type="number" id="price-gnv" placeholder="4.99" step="0.01" value="4.99">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 25px;">
+                        <button class="btn btn-success" onclick="saveFuelPrices()">💾 Salvar Preços</button>
+                        <button class="btn btn-secondary" onclick="loadFuelPrices()">🔄 Recarregar Preços</button>
+                    </div>
+
+                    <div class="card" style="margin-top: 30px;">
+                        <h4>📊 Histórico de Preços</h4>
+                        <p style="color: #64748b; margin-top: 10px;">Última atualização: <span id="last-price-update">Nunca</span></p>
+                        <div class="table-container" style="margin-top: 20px;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Combustível</th>
+                                        <th>Preço Atual (R$/L)</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fuel-prices-list">
+                                    <!-- Preenchido via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vehicles Screen (Supervisor only) -->
+            <div id="vehicles" class="screen">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🚚 Gestão de Veículos</div>
+                        <div>
+                            <button class="btn" onclick="newVehicle()">➕ Novo Veículo</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Placa</th>
+                                    <th>Modelo</th>
+                                    <th>Ano</th>
+                                    <th>KM Atual</th>
+                                    <th>Último Abastecimento</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vehicles-list">
+                                <!-- Preenchido via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Screen (Supervisor only) -->
+            <div id="reports" class="screen">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">📈 Relatórios de Abastecimento</div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Período:</label>
+                            <select id="report-period" onchange="generateReport()">
+                                <option value="week">Última Semana</option>
+                                <option value="month">Último Mês</option>
+                                <option value="quarter">Último Trimestre</option>
+                                <option value="year">Último Ano</option>
+                                <option value="custom">Personalizado</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo de Relatório:</label>
+                            <select id="report-type" onchange="generateReport()">
+                                <option value="summary">Resumo Geral</option>
+                                <option value="consumption">Consumo por Veículo</option>
+                                <option value="cost">Análise de Custos</option>
+                                <option value="efficiency">Eficiência Energética</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="report-content">
+                        <!-- Conteúdo do relatório será gerado aqui -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Screen (Supervisor only) -->
+            <div id="settings" class="screen">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">⚙️ Configurações do Sistema</div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Supervisor Padrão:</label>
+                            <select>
+                                <option>Ana Costa - Supervisora</option>
+                                <option>Pedro Lima - Supervisor</option>
+                                <option>Roberto Santos - Gerente</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Limite Máximo por Abastecimento (R$):</label>
+                            <input type="number" placeholder="500.00" value="500.00" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Notificações:</label>
+                            <select>
+                                <option>Todas Ativadas</option>
+                                <option>Apenas Urgentes</option>
+                                <option>Desativadas</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Backup Automático:</label>
+                            <select>
+                                <option>Diário</option>
+                                <option>Semanal</option>
+                                <option>Mensal</option>
+                                <option>Desativado</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 25px;">
+                        <button class="btn btn-success" onclick="saveSettings()">💾 Salvar Configurações</button>
+                        <button class="btn btn-secondary" onclick="backupData()">📋 Backup Manual</button>
+                        <button class="btn btn-warning" onclick="syncData()">🔄 Sincronizar Dados</button>
+                        <button class="btn btn-danger" onclick="clearCache()">🗑️ Limpar Cache</button>
+                    </div>
+
+                    <div class="card" style="margin-top: 30px;">
+                        <h4>📊 Informações do Sistema</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px;">
+                            <div>
+                                <strong>Versão:</strong> v2.3.0<br>
+                                <strong>Último Backup:</strong> 29/09/2025<br>
+                                <strong>Usuários Ativos:</strong> 12
+                            </div>
+                            <div>
+                                <strong>Total Requisições:</strong> <span id="total-requests">0</span><br>
+                                <strong>Espaço Usado:</strong> 124 MB<br>
+                                <strong>Uptime:</strong> 99.8%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for New Request -->
+    <div id="modal-new-request" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('modal-new-request')">&times;</span>
+            <h2 style="margin-bottom: 20px;">📋 Nova Requisição de Abastecimento</h2>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Motorista:</label>
+                    <select id="new-request-driver">
+                        <option value="">Selecione um motorista</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Placa do Veículo:</label>
+                    <select id="new-request-plate" onchange="updateVehicleModel()">
+                        <option value="">Selecione uma placa</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Modelo do Veículo:</label>
+                    <input type="text" id="new-request-vehicle-model" readonly placeholder="Modelo será preenchido automaticamente">
+                </div>
+                <div class="form-group">
+                    <label>Cidade:</label>
+                    <select id="new-request-city">
+                        <option value="">Selecione uma cidade</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Posto de Combustível:</label>
+                    <select id="new-request-gas-station">
+                        <option value="">Selecione um posto</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Combustível:</label>
+                    <select id="new-request-fuel-type">
+                        <option value="">Selecione o combustível</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Quilometragem Atual:</label>
+                    <input type="number" id="new-request-km" placeholder="85000">
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Abastecimento:</label>
+                    <select id="new-request-fuel-method">
+                        <option value="tanque">Tanque Completo</option>
+                        <option value="galao">Galão</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Prioridade:</label>
+                    <select id="new-request-priority">
+                        <option value="normal">Normal</option>
+                        <option value="emergency">Emergência</option>
+                    </select>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Observações:</label>
+                    <textarea id="new-request-notes" placeholder="Informações adicionais sobre o abastecimento..." rows="3"></textarea>
+                </div>
+            </div>
+
+            <div style="margin-top: 25px; display: flex; gap: 15px; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-new-request')">Cancelar</button>
+                <button class="btn" onclick="createRequest()">✅ Criar Requisição</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for New Vehicle (Supervisor only) -->
+    <div id="modal-new-vehicle" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('modal-new-vehicle')">&times;</span>
+            <h2 style="margin-bottom: 20px;">🚚 Cadastrar Novo Veículo</h2>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Placa:</label>
+                    <input type="text" id="new-vehicle-plate" placeholder="ABC-1234" style="text-transform: uppercase;">
+                </div>
+                <div class="form-group">
+                    <label>Modelo:</label>
+                    <input type="text" id="new-vehicle-model" placeholder="Toyota Hilux">
+                </div>
+                <div class="form-group">
+                    <label>Ano:</label>
+                    <input type="number" id="new-vehicle-year" placeholder="2023" min="2000" max="2025">
+                </div>
+                <div class="form-group">
+                    <label>Cor:</label>
+                    <input type="text" id="new-vehicle-color" placeholder="Branca">
+                </div>
+                <div class="form-group">
+                    <label>Quilometragem Inicial:</label>
+                    <input type="number" id="new-vehicle-km" placeholder="0">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Observações:</label>
+                    <textarea id="new-vehicle-notes" placeholder="Informações adicionais sobre o veículo..." rows="2"></textarea>
+                </div>
+            </div>
+
+            <div style="margin-top: 25px; display: flex; gap: 15px; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-new-vehicle')">Cancelar</button>
+                <button class="btn" onclick="createVehicle()">✅ Cadastrar Veículo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Edit Real Value -->
+    <div id="modal-edit-real-value" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('modal-edit-real-value')">&times;</span>
+            <h2 style="margin-bottom: 20px;">💰 Editar Valor Real do Abastecimento</h2>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>ID da Requisição:</label>
+                    <input type="text" id="edit-request-id" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Combustível:</label>
+                    <input type="text" id="edit-fuel-type" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Preço Unitário (R$/L):</label>
+                    <input type="text" id="edit-unit-price" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Litros Abastecidos:</label>
+                    <input type="number" id="edit-liters" placeholder="0.0" step="0.1" onchange="calculateTotalPrice()">
+                </div>
+                <div class="form-group">
+                    <label>Preço Total Calculado (R$):</label>
+                    <input type="text" id="edit-total-price" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Valor Real (R$):</label>
+                    <input type="number" id="edit-real-value" placeholder="0.00" step="0.01">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Observações do Abastecimento:</label>
+                    <textarea id="edit-fuel-notes" placeholder="Observações sobre o abastecimento realizado..." rows="3"></textarea>
+                </div>
+            </div>
+
+            <div style="margin-top: 25px; display: flex; gap: 15px; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-edit-real-value')">Cancelar</button>
+                <button class="btn btn-success" onclick="updateRealValue()">✅ Finalizar Abastecimento</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        // Estado global da aplicação
+        let currentRole = '';
+        let isLoggedIn = false;
+
+        // Listas de dados do sistema
+        const cities = [
+            'Santarém',
+            'Mojuí dos Campos',
+            'Lago Grande',
+            'Vila Gorete',
+            'Juruti',
+            'Almeirim',
+            'Barcarena',
+            'Itaituba',
+            'Curuai',
+            'Vila Brasil',
+            'Membeca',
+            'Ilha das Onças'
+        ];
+
+        const gasStations = [
+            'Posto Ipiranga - Centro',
+            'Posto Shell - Rodovia',
+            'Posto Petrobras - Aeroporto',
+            'Posto BR - Santarenzinho',
+            'Posto Ale - Matinha',
+            'Posto Equador - Fátima',
+            'Auto Posto Tropical',
+            'Posto São Francisco',
+            'Posto Santa Clara',
+            'Posto União'
+        ];
+
+        const fuelTypes = [
+            'Diesel S10',
+            'Diesel Comum',
+            'Gasolina Comum',
+            'Gasolina Aditivada',
+            'Etanol',
+            'GNV'
+        ];
+
+        // Lista de motoristas disponíveis
+        const availableDrivers = [
+            'ABRAÃO TRINDADE ALBUQUERQUE',
+            'AIRTON VINICIUS DOS SANTOS OLIVEIRA',
+            'ALAN DENNER PINTO DE SOUZA',
+            'ALESSANDRO OZITIO CAMPELO',
+            'ARLISON NESTOR DA CONCEIÇÃO',
+            'CARLOS ALBERTO DOS SANTOS',
+            'CIDARTA REGIS DE SOUZA',
+            'DANIEL PINTO PEDROSO',
+            'DARLEN WILSON FERREIRA SILVA',
+            'DINEY RODRIGUES DOS PASSOS',
+            'EDER JUNIOR PAPALEO DA SILVA',
+            'EDINEI DA SILVA FERREIRA',
+            'EDUARDO PINHEIRO RODRIGUES',
+            'HELIO BARBOSA COSTA',
+            'JACKSOM AMARAL DA SILVA',
+            'JANILDO PORTILHO SANTOS FILHO',
+            'JOÃO BATISTA DA SILVA BEZERRA',
+            'JOELSON MONTEIRO PEREIRA',
+            'JOSIVAN MACIEL DOS REIS',
+            'JUAN FABRICIO RODRIGUES DE LIMA',
+            'JUNIPERO MANOEL DA SILVA LOPES',
+            'KLEBER JOSE DOS SANTOS PEREIRA',
+            'MARCIO FERREIRA SABOIA',
+            'MARCOS ANDRE MENDES PEREIRA',
+            'MARIVALDO DE JESUS CORREA',
+            'MARLISSON FEITOSA BEZERRA',
+            'MATHEUS TRINDADE DE ALMEIDA',
+            'MICHAEL LUAN DOS SANTOS SILVA',
+            'NILTON MARCOS MOTA CAMPOS',
+            'RENILDO FERREIRA LAVAREDA',
+            'RIAN TEIXEIRA SIQUEIRA',
+            'ROMÁRIO LIMA RIKER',
+            'LEONARDO NANTES ALVES',
+            'JARLISSON FABIO SANTOS DE SOUSA',
+            'PEDRO HUEB TAPXURE CURRY',
+            'RAFAEL REZENDE DA SILVA'
+        ];
+
+        // Lista inicial de veículos para popular o sistema
+        const initialVehicles = [
+            {
+                plate: 'BCQ0937',
+                model: 'F4000',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branca'
+            },
+            {
+                plate: 'JJB4E57',
+                model: 'CARGO 1217',
+                year: '2002',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'NCF3078',
+                model: 'L200 OUTDOOR',
+                year: '2004',
+                status: 'Ativo',
+                color: 'Prata'
+            },
+            {
+                plate: 'NFW2H74',
+                model: 'CARGO 1317F',
+                year: '2002',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'NRP2E59',
+                model: 'L200 TRITON 3.2 D',
+                year: '2016',
+                status: 'Ativo',
+                color: 'Prata'
+            },
+            {
+                plate: 'OFP1B78',
+                model: '13.190 CRM 4X2',
+                year: '2020',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'OGI3J31',
+                model: 'L200 TRITON 3.2 D',
+                year: '2016',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'OLI7180',
+                model: 'L200 TRITON GLS D',
+                year: '2016',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'PHK5D53',
+                model: 'STRADA FREEDOM CD13',
+                year: '2022',
+                status: 'Ativo',
+                color: 'Prata'
+            },
+            {
+                plate: 'PHL2H91',
+                model: 'S10 LT',
+                year: '2016',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'PHL8286',
+                model: 'STRADA FREEDOM CD13',
+                year: '2014',
+                status: 'Ativo',
+                color: 'Prata'
+            },
+            {
+                plate: 'RXE8A01',
+                model: 'SAVEIRO CS RB MF',
+                year: '2018',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'PVA2J86',
+                model: 'SAVEIRO CS RB MF',
+                year: '2016',
+                status: 'Ativo',
+                color: 'Prata'
+            },
+            {
+                plate: 'SHF6D51',
+                model: 'TECTOR 170E21',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'SHK5E03',
+                model: 'TECTOR 170E21',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'SYN1C01',
+                model: 'TECTOR 170E21',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'TAU9G16',
+                model: '17.210 CRM 4X2',
+                year: '2024',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'TAU9G17',
+                model: '17.210 CRM 4X2',
+                year: '2024',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'TDT0133',
+                model: 'STRADA FREEDOM CD13',
+                year: '2022',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'TDT3G89',
+                model: 'STRADA FREEDOM CD13',
+                year: '2022',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'TDT3H12',
+                model: 'STRADA FREEDOM CD13',
+                year: '2022',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'TDT3H26',
+                model: 'STRADA FREEDOM CD13',
+                year: '2022',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'CATAMARÃ 1',
+                model: 'CATAMARÃ',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branca'
+            },
+            {
+                plate: 'CATAMARÃ 2',
+                model: 'CATAMARÃ',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branca'
+            },
+            {
+                plate: 'RETROESCAVADEIRA 1',
+                model: 'RETROESCAVADEIRA',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branca'
+            },
+            {
+                plate: 'RETROESCAVADEIRA 2',
+                model: 'RETROESCAVADEIRA',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branca'
+            },
+            {
+                plate: 'RETROESCAVADEIRA 3',
+                model: 'RETROESCAVADEIRA',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branca'
+            },
+            {
+                plate: 'QZK5H16',
+                model: 'S10 LTZ',
+                year: '2024',
+                status: 'Ativo',
+                color: 'PRETA'
+            },
+            {
+                plate: 'TGM0373',
+                model: 'HILUX SRX',
+                year: '2022',
+                status: 'Ativo',
+                color: 'PRETA'
+            },
+            {
+                plate: 'QVN99H33',
+                model: 'HB20',
+                year: '2022',
+                status: 'Ativo',
+                color: 'BRANCA'
+            }
+        ];
+
+        // Dados do sistema
+        let requests = [];
+        let vehicles = [];
+        let fuelRecords = [];
+
+        // Preços de combustíveis - AGORA COM LISTA EDITÁVEL
+        let fuelPrices = {
+            'Diesel S10': 6.69,
+            'Diesel Comum': 6.10,
+            'Gasolina Comum': 6.43,
+            'Gasolina Aditivada': 7.18,
+            'Etanol': 4.39,
+            'GNV': 5.13,
+            lastUpdate: new Date().toISOString()
+        };
+
+        // Função para calcular preço total baseado em litros e tipo de combustível
+        function calculateTotalPrice(fuelType, liters) {
+            if (!fuelType || !liters) return null;
+            const pricePerLiter = fuelPrices[fuelType] || 0;
+            return (pricePerLiter * liters).toFixed(2);
+        }
+
+        // Função para salvar preços de combustíveis
+        function saveFuelPrices() {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem alterar preços!', 'error');
+                return;
+            }
+
+            fuelPrices = {
+                'Diesel S10': parseFloat(document.getElementById('price-diesel-s10').value) || 6.49,
+                'Diesel Comum': parseFloat(document.getElementById('price-diesel-comum').value) || 6.29,
+                'Gasolina Comum': parseFloat(document.getElementById('price-gasolina-comum').value) || 5.89,
+                'Gasolina Aditivada': parseFloat(document.getElementById('price-gasolina-aditivada').value) || 6.19,
+                'Etanol': parseFloat(document.getElementById('price-etanol').value) || 4.29,
+                'GNV': parseFloat(document.getElementById('price-gnv').value) || 4.99,
+                lastUpdate: new Date().toISOString()
+            };
+
+            autoSave();
+            loadFuelPricesList();
+            showNotification('Preços de combustíveis salvos com sucesso!', 'success');
+        }
+
+        // Função para carregar preços de combustíveis
+        function loadFuelPrices() {
+            document.getElementById('price-diesel-s10').value = fuelPrices['Diesel S10'] || 6.49;
+            document.getElementById('price-diesel-comum').value = fuelPrices['Diesel Comum'] || 6.29;
+            document.getElementById('price-gasolina-comum').value = fuelPrices['Gasolina Comum'] || 5.89;
+            document.getElementById('price-gasolina-aditivada').value = fuelPrices['Gasolina Aditivada'] || 6.19;
+            document.getElementById('price-etanol').value = fuelPrices['Etanol'] || 4.29;
+            document.getElementById('price-gnv').value = fuelPrices['GNV'] || 4.99;
+
+            const lastUpdate = document.getElementById('last-price-update');
+            if (lastUpdate && fuelPrices.lastUpdate) {
+                lastUpdate.textContent = formatDate(fuelPrices.lastUpdate.split('T')[0]) + ' às ' +
+                    new Date(fuelPrices.lastUpdate).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+            }
+
+            loadFuelPricesList();
+        }
+
+        // Função para listar preços na tabela
+        function loadFuelPricesList() {
+            const tbody = document.getElementById('fuel-prices-list');
+            if (!tbody) return;
+
+            const fuelTypesList = ['Diesel S10', 'Diesel Comum', 'Gasolina Comum', 'Gasolina Aditivada', 'Etanol', 'GNV'];
+
+            tbody.innerHTML = fuelTypesList.map(fuel => `
+                <tr>
+                    <td><strong>${fuel}</strong></td>
+                    <td>R$ ${fuelPrices[fuel].toFixed(2).replace('.', ',')}</td>
+                    <td><span class="status-badge status-completed">Ativo</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // Função para inicializar veículos na primeira execução
+        function initializeVehicles() {
+            if (vehicles.length === 0) {
+                vehicles = [...initialVehicles];
+                autoSave();
+                console.log('Veículos iniciais carregados no sistema');
+            }
+        }
+
+        // Sistema de armazenamento local
+        function autoSave() {
+            const data = {
+                requests: requests,
+                vehicles: vehicles,
+                fuelRecords: fuelRecords,
+                fuelPrices: fuelPrices,
+                lastSave: new Date().toISOString()
+            };
+            localStorage.setItem('rezende-energia-data', JSON.stringify(data));
+        }
+
+        function loadDataFromStorage() {
+            const saved = localStorage.getItem('rezende-energia-data');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    requests = data.requests || [];
+                    vehicles = data.vehicles && data.vehicles.length > 0 ? data.vehicles : [...initialVehicles];
+                    fuelRecords = data.fuelRecords || [];
+                    fuelPrices = data.fuelPrices || fuelPrices;
+
+                    if (vehicles.length === 0) {
+                        vehicles = [...initialVehicles];
+                    }
+                } catch (e) {
+                    console.error('Erro ao carregar dados salvos:', e);
+                    requests = [];
+                    vehicles = [...initialVehicles];
+                    fuelRecords = [];
+                }
+            } else {
+                requests = [];
+                vehicles = [...initialVehicles];
+                fuelRecords = [];
+                autoSave();
+            }
+        }
+
+        // Atualizar select de placas de veículos
+        function updateVehiclePlatesSelect() {
+            const plateSelect = document.getElementById('new-request-plate');
+            if (plateSelect) {
+                plateSelect.innerHTML = '<option value="">Selecione uma placa</option>';
+
+                vehicles.forEach(vehicle => {
+                    const option = document.createElement('option');
+                    option.value = vehicle.plate;
+                    option.textContent = vehicle.plate;
+                    option.setAttribute('data-model', vehicle.model);
+                    plateSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Atualizar modelo do veículo automaticamente quando placa é selecionada
+        function updateVehicleModel() {
+            const plateSelect = document.getElementById('new-request-plate');
+            const modelInput = document.getElementById('new-request-vehicle-model');
+
+            if (plateSelect && modelInput) {
+                const selectedOption = plateSelect.options[plateSelect.selectedIndex];
+                if (selectedOption && selectedOption.getAttribute('data-model')) {
+                    modelInput.value = selectedOption.getAttribute('data-model');
+                } else {
+                    modelInput.value = '';
+                }
+            }
+        }
+
+        // Função para popular filtros de motoristas
+        function populateDriverFilters() {
+            const filterSelects = ['filter-driver', 'filter-fuel-driver'];
+
+            const allDrivers = [...new Set([
+                ...availableDrivers,
+                ...requests.map(r => r.driver)
+            ])].filter(driver => driver && driver !== '');
+
+            filterSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    const firstOption = select.options[0];
+                    select.innerHTML = '';
+                    select.appendChild(firstOption);
+
+                    allDrivers.forEach(driver => {
+                        const option = document.createElement('option');
+                        option.value = driver;
+                        option.textContent = driver;
+                        select.appendChild(option);
+                    });
+                }
+            });
+        }
+
+        // Função para popular selects
+        function populateSelects() {
+            initializeVehicles();
+
+            const citySelects = ['new-request-city'];
+            citySelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    select.innerHTML = '<option value="">Selecione uma cidade</option>';
+                    cities.forEach(city => {
+                        const option = document.createElement('option');
+                        option.value = city;
+                        option.textContent = city;
+                        select.appendChild(option);
+                    });
+                }
+            });
+
+            const stationSelects = ['new-request-gas-station'];
+            stationSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    select.innerHTML = '<option value="">Selecione um posto</option>';
+                    gasStations.forEach(station => {
+                        const option = document.createElement('option');
+                        option.value = station;
+                        option.textContent = station;
+                        select.appendChild(option);
+                    });
+                }
+            });
+
+            const fuelSelects = ['new-request-fuel-type'];
+            fuelSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    select.innerHTML = '<option value="">Selecione o combustível</option>';
+                    fuelTypes.forEach(fuel => {
+                        const option = document.createElement('option');
+                        option.value = fuel;
+                        option.textContent = fuel;
+                        select.appendChild(option);
+                    });
+                }
+            });
+
+            const driverFormSelects = ['new-request-driver'];
+            driverFormSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    select.innerHTML = '<option value="">Selecione um motorista</option>';
+                    availableDrivers.forEach(driver => {
+                        const option = document.createElement('option');
+                        option.value = driver;
+                        option.textContent = driver;
+                        select.appendChild(option);
+                    });
+                }
+            });
+
+            updateVehiclePlatesSelect();
+            populateDriverFilters();
+        }
+
+        // Funções de login
+        function loginAsDriver() {
+            currentRole = 'motorista';
+            isLoggedIn = true;
+            showMainApp();
+        }
+
+        function showSupervisorLogin() {
+            document.getElementById('role-selection').style.display = 'none';
+            document.getElementById('supervisor-login').style.display = 'block';
+        }
+
+        function backToRoleSelection() {
+            document.getElementById('role-selection').style.display = 'block';
+            document.getElementById('supervisor-login').style.display = 'none';
+        }
+
+        function loginAsSupervisor() {
+            const username = document.getElementById('supervisor-username').value;
+            const password = document.getElementById('supervisor-password').value;
+
+            const supervisors = {
+                'Airton': '123',
+                'Roberto': 'admin2025',
+                'Ana': 'super456'
+            };
+
+            if (supervisors[username] && supervisors[username] === password) {
+                currentRole = 'supervisor';
+                isLoggedIn = true;
+                showMainApp();
+            } else {
+                showNotification('Usuário ou senha incorretos!', 'error');
+            }
+        }
+
+        function logout() {
+            isLoggedIn = false;
+            currentRole = '';
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('main-app').style.display = 'none';
+
+            document.getElementById('supervisor-username').value = '';
+            document.getElementById('supervisor-password').value = '';
+            backToRoleSelection();
+        }
+
+        function showMainApp() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+
+            setupUserInterface();
+            updateCurrentDate();
+            loadDataFromStorage();
+            loadRecentActivities();
+            loadAllRequests();
+            loadVehicles();
+            loadFuelRecords();
+            generateReport();
+            updateStats();
+        }
+
+        function setupUserInterface() {
+            const userRoleDisplay = document.getElementById('user-role-display');
+            const navVehicles = document.getElementById('nav-vehicles');
+            const navReports = document.getElementById('nav-reports');
+            const navSettings = document.getElementById('nav-settings');
+            const navFuelRecords = document.getElementById('nav-fuel-records');
+            const navFuelPrices = document.getElementById('nav-fuel-prices');
+            const actionReports = document.getElementById('action-reports');
+            const actionExport = document.getElementById('action-export');
+            const statsGrid = document.getElementById('stats-grid');
+            const filtersSection = document.getElementById('filters-section');
+            const actionsHeader = document.getElementById('actions-header');
+            const requestsActionsHeader = document.getElementById('requests-actions-header');
+
+            if (currentRole === 'supervisor') {
+                userRoleDisplay.textContent = '👨‍💼 Supervisor';
+                if (navVehicles) navVehicles.classList.remove('hidden');
+                if (navReports) navReports.classList.remove('hidden');
+                if (navSettings) navSettings.classList.remove('hidden');
+                if (navFuelRecords) navFuelRecords.classList.remove('hidden');
+                if (navFuelPrices) navFuelPrices.classList.remove('hidden');
+                if (actionReports) actionReports.style.display = 'block';
+                if (actionExport) actionExport.style.display = 'block';
+                if (statsGrid) statsGrid.style.pointerEvents = 'auto';
+                if (filtersSection) filtersSection.style.display = 'grid';
+                if (actionsHeader) actionsHeader.style.display = 'table-cell';
+                if (requestsActionsHeader) requestsActionsHeader.style.display = 'table-cell';
+            } else {
+                userRoleDisplay.textContent = '🚛 Motorista';
+                if (navVehicles) navVehicles.classList.add('hidden');
+                if (navReports) navReports.classList.add('hidden');
+                if (navSettings) navSettings.classList.add('hidden');
+                if (navFuelRecords) navFuelRecords.classList.add('hidden');
+                if (navFuelPrices) navFuelPrices.classList.add('hidden');
+                if (actionReports) actionReports.style.display = 'none';
+                if (actionExport) actionExport.style.display = 'none';
+                if (statsGrid) statsGrid.style.pointerEvents = 'none';
+                if (filtersSection) filtersSection.style.display = 'none';
+                if (actionsHeader) actionsHeader.style.display = 'none';
+                if (requestsActionsHeader) requestsActionsHeader.style.display = 'none';
+            }
+
+            populateSelects();
+        }
+
+        // Função para atualizar data atual
+        function updateCurrentDate() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const dateElement = document.getElementById('current-date');
+            if (dateElement) {
+                dateElement.textContent = dateStr;
+            }
+        }
+
+        function showScreen(screenId) {
+            if (currentRole === 'motorista' && ['vehicles', 'reports', 'settings', 'fuel-records', 'fuel-prices'].includes(screenId)) {
+                showNotification('Acesso negado! Esta funcionalidade é apenas para supervisores.', 'error');
+                return;
+            }
+
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            const screenElement = document.getElementById(screenId);
+            if (screenElement) {
+                screenElement.classList.add('active');
+            }
+
+            document.querySelectorAll('.nav-item').forEach(item => {
+                if (item.textContent.includes(getScreenName(screenId))) {
+                    item.classList.add('active');
+                }
+            });
+
+            if (screenId === 'reports') {
+                generateReport();
+            } else if (screenId === 'fuel-records') {
+                loadFuelRecords();
+            } else if (screenId === 'requests') {
+                loadAllRequests();
+            } else if (screenId === 'vehicles') {
+                loadVehicles();
+            } else if (screenId === 'fuel-prices') {
+                loadFuelPrices();
+            }
+        }
+
+        function getScreenName(screenId) {
+            const screenNames = {
+                'dashboard': '📊',
+                'requests': '📋',
+                'fuel-records': '⛽',
+                'fuel-prices': '💰',
+                'vehicles': '🚚',
+                'reports': '📈',
+                'settings': '⚙️'
+            };
+            return screenNames[screenId] || '';
+        }
+
+        // Carregar atividades recentes
+        function loadRecentActivities() {
+            const tbody = document.getElementById('recent-activities');
+            if (!tbody) return;
+
+            let recentRequests = requests.slice(0, 5);
+
+            if (currentRole === 'motorista') {
+                recentRequests = requests.filter(req => req.driver === 'Motorista Atual').slice(0, 5);
+            }
+
+            if (recentRequests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #64748b; padding: 40px;">Nenhuma requisição encontrada</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = recentRequests.map(req => `
+                <tr>
+                    <td><strong>${req.id}</strong></td>
+                    <td>${req.driver}</td>
+                    <td>${req.vehicle}</td>
+                    <td>${req.city || 'N/A'}</td>
+                    <td><span class="status-badge status-${req.status}">${getStatusText(req.status)}</span></td>
+                    <td>${formatDate(req.date)}</td>
+                    <td>${req.estimatedValue || req.value || 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-small" onclick="viewRequest('${req.id}')">👁️</button>
+                        ${currentRole === 'supervisor' && req.status === 'pending' ? `
+                            <button class="btn btn-small btn-success" onclick="approveRequest('${req.id}')">✅</button>
+                            <button class="btn btn-small btn-danger" onclick="rejectRequest('${req.id}')">❌</button>
+                        ` : ''}
+                        ${currentRole === 'supervisor' && req.status === 'signed' ? `
+                            <button class="btn btn-small btn-warning" onclick="markAsFueled('${req.id}')">⛽</button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Carregar todas as requisições
+        function loadAllRequests() {
+            const tbody = document.getElementById('all-requests');
+            if (!tbody) return;
+
+            let filteredRequests = [...requests];
+
+            if (currentRole === 'motorista') {
+                filteredRequests = requests.filter(req => req.driver === 'Motorista Atual');
+            }
+
+            if (filteredRequests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; color: #64748b; padding: 40px;">Nenhuma requisição encontrada</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filteredRequests.map(req => `
+                <tr>
+                    <td><strong>${req.id}</strong></td>
+                    <td>${req.driver}</td>
+                    <td>${req.vehicle}</td>
+                    <td>${req.city || 'N/A'}</td>
+                    <td>${req.gasStation || 'N/A'}</td>
+                    <td>${req.fuelType || 'N/A'}</td>
+                    <td><span class="status-badge status-${req.status}">${getStatusText(req.status)}</span></td>
+                    <td>${formatDate(req.date)}</td>
+                    <td>${req.supervisor || 'N/A'}</td>
+                    <td>${req.estimatedValue || req.value || 'N/A'}</td>
+                    <td>${req.km ? req.km.toLocaleString() + ' km' : 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-small" onclick="viewRequest('${req.id}')">👁️</button>
+                        ${currentRole === 'supervisor' ? `
+                            ${req.status === 'pending' ? `
+                                <button class="btn btn-small btn-success" onclick="approveRequest('${req.id}')">✅</button>
+                                <button class="btn btn-small btn-danger" onclick="rejectRequest('${req.id}')">❌</button>
+                            ` : ''}
+                            ${req.status === 'signed' ? `
+                                <button class="btn btn-small btn-warning" onclick="markAsFueled('${req.id}')">⛽</button>
+                            ` : ''}
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Carregar veículos (apenas supervisor)
+        function loadVehicles() {
+            if (currentRole !== 'supervisor') return;
+
+            const tbody = document.getElementById('vehicles-list');
+            if (!tbody) return;
+
+            if (vehicles.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #64748b; padding: 40px;">Nenhum veículo cadastrado</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = vehicles.map(vehicle => `
+                <tr>
+                    <td><strong>${vehicle.plate}</strong></td>
+                    <td>${vehicle.model}</td>
+                    <td>${vehicle.year}</td>
+                    <td>${vehicle.km.toLocaleString()} km</td>
+                    <td>${vehicle.lastFuel === 'Nunca' ? 'Nunca' : formatDate(vehicle.lastFuel)}</td>
+                    <td><span class="status-badge status-${vehicle.status === 'Ativo' ? 'completed' : vehicle.status === 'Manutenção' ? 'pending' : 'fueled'}">${vehicle.status}</span></td>
+                    <td>
+                        <button class="btn btn-small" onclick="viewVehicle('${vehicle.plate}')">👁️</button>
+                        <button class="btn btn-small btn-warning" onclick="editVehicle('${vehicle.plate}')">✏️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Carregar registros de abastecimento - AGORA COM PREÇO TOTAL
+        function loadFuelRecords() {
+            if (currentRole !== 'supervisor') return;
+
+            const tbody = document.getElementById('fuel-records-list');
+            if (!tbody) return;
+
+            if (fuelRecords.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; color: #64748b; padding: 40px;">Nenhum registro de abastecimento encontrado</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = fuelRecords.map(record => {
+                const pricePerLiter = fuelPrices[record.fuelType] || 0;
+                const totalPrice = record.liters ? calculateTotalPrice(record.fuelType, record.liters) : 'N/A';
+
+                return `
+                <tr>
+                    <td><strong>${record.requestId}</strong></td>
+                    <td>${record.driver}</td>
+                    <td>${record.vehicle}</td>
+                    <td>${record.gasStation}</td>
+                    <td>${record.fuelType}</td>
+                    <td>${record.liters ? record.liters + ' L' : 'N/A'}</td>
+                    <td>R$ ${pricePerLiter.toFixed(2)}</td>
+                    <td>${totalPrice !== 'N/A' ? 'R$ ' + totalPrice : 'N/A'}</td>
+                    <td>${record.realValue || 'Pendente'}</td>
+                    <td><span class="status-badge status-${record.status === 'completed' ? 'completed' : 'pending'}">${record.status === 'completed' ? 'Finalizado' : 'Pendente'}</span></td>
+                    <td>${formatDate(record.date)}</td>
+                    <td>
+                        <button class="btn btn-small" onclick="viewFuelRecord('${record.requestId}')">👁️</button>
+                        ${record.status === 'pending' ? `
+                            <button class="btn btn-small btn-success" onclick="editRealValue('${record.requestId}')">💰</button>
+                        ` : ''}
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        // Funções auxiliares
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': 'Pendente',
+                'signed': 'Aprovado',
+                'rejected': 'Rejeitado',
+                'fueled': 'Abastecido',
+                'completed': 'Completo'
+            };
+            return statusMap[status] || status;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr || dateStr === 'Nunca') return 'Nunca';
+            try {
+                const date = new Date(dateStr + 'T00:00:00');
+                return date.toLocaleDateString('pt-BR');
+            } catch (e) {
+                return dateStr;
+            }
+        }
+
+        // Atualizar estatísticas
+        function updateStats() {
+            let filteredRequests = requests;
+
+            if (currentRole === 'motorista') {
+                filteredRequests = requests.filter(req => req.driver === 'Motorista Atual');
+            }
+
+            const stats = {
+                pending: filteredRequests.filter(req => req.status === 'pending').length,
+                signed: filteredRequests.filter(req => req.status === 'signed').length,
+                fueled: filteredRequests.filter(req => req.status === 'fueled').length,
+                completed: filteredRequests.filter(req => req.status === 'completed').length
+            };
+
+            const statPending = document.getElementById('stat-pending');
+            const statSigned = document.getElementById('stat-signed');
+            const statFueled = document.getElementById('stat-fueled');
+            const statCompleted = document.getElementById('stat-completed');
+
+            if (statPending) statPending.textContent = stats.pending;
+            if (statSigned) statSigned.textContent = stats.signed;
+            if (statFueled) statFueled.textContent = stats.fueled;
+            if (statCompleted) statCompleted.textContent = stats.completed;
+
+            const totalElement = document.getElementById('total-requests');
+            if (totalElement) {
+                totalElement.textContent = requests.length;
+            }
+        }
+
+        // Filtros
+        function filterByStatus(status) {
+            if (currentRole === 'motorista') return;
+
+            showScreen('requests');
+            setTimeout(() => {
+                const filterStatus = document.getElementById('filter-status');
+                if (filterStatus) {
+                    filterStatus.value = status;
+                    filterRequests();
+                }
+            }, 100);
+        }
+
+        function filterRequests() {
+            if (currentRole === 'motorista') return;
+
+            const status = document.getElementById('filter-status')?.value || '';
+            const driver = document.getElementById('filter-driver')?.value || '';
+            const startDate = document.getElementById('filter-start-date')?.value || '';
+            const endDate = document.getElementById('filter-end-date')?.value || '';
+
+            let filtered = [...requests];
+
+            if (status) {
+                filtered = filtered.filter(req => req.status === status);
+            }
+            if (driver) {
+                filtered = filtered.filter(req => req.driver === driver);
+            }
+            if (startDate) {
+                filtered = filtered.filter(req => req.date >= startDate);
+            }
+            if (endDate) {
+                filtered = filtered.filter(req => req.date <= endDate);
+            }
+
+            const tbody = document.getElementById('all-requests');
+            if (!tbody) return;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; color: #64748b; padding: 40px;">Nenhuma requisição encontrada com os filtros aplicados</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(req => `
+                <tr>
+                    <td><strong>${req.id}</strong></td>
+                    <td>${req.driver}</td>
+                    <td>${req.vehicle}</td>
+                    <td>${req.city || 'N/A'}</td>
+                    <td>${req.gasStation || 'N/A'}</td>
+                    <td>${req.fuelType || 'N/A'}</td>
+                    <td><span class="status-badge status-${req.status}">${getStatusText(req.status)}</span></td>
+                    <td>${formatDate(req.date)}</td>
+                    <td>${req.supervisor || 'N/A'}</td>
+                    <td>${req.estimatedValue || req.value || 'N/A'}</td>
+                    <td>${req.km ? req.km.toLocaleString() + ' km' : 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-small" onclick="viewRequest('${req.id}')">👁️</button>
+                        ${currentRole === 'supervisor' ? `
+                            ${req.status === 'pending' ? `
+                                <button class="btn btn-small btn-success" onclick="approveRequest('${req.id}')">✅</button>
+                                <button class="btn btn-small btn-danger" onclick="rejectRequest('${req.id}')">❌</button>
+                            ` : ''}
+                            ${req.status === 'signed' ? `
+                                <button class="btn btn-small btn-warning" onclick="markAsFueled('${req.id}')">⛽</button>
+                            ` : ''}
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Filtrar registros de abastecimento
+        function filterFuelRecords() {
+            if (currentRole !== 'supervisor') return;
+
+            const status = document.getElementById('filter-fuel-status')?.value || '';
+            const driver = document.getElementById('filter-fuel-driver')?.value || '';
+            const startDate = document.getElementById('filter-fuel-start-date')?.value || '';
+            const endDate = document.getElementById('filter-fuel-end-date')?.value || '';
+
+            let filtered = [...fuelRecords];
+
+            if (status) {
+                filtered = filtered.filter(record => record.status === status);
+            }
+            if (driver) {
+                filtered = filtered.filter(record => record.driver === driver);
+            }
+            if (startDate) {
+                filtered = filtered.filter(record => record.date >= startDate);
+            }
+            if (endDate) {
+                filtered = filtered.filter(record => record.date <= endDate);
+            }
+
+            const tbody = document.getElementById('fuel-records-list');
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; color: #64748b; padding: 40px;">Nenhum registro encontrado com os filtros aplicados</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(record => {
+                const pricePerLiter = fuelPrices[record.fuelType] || 0;
+                const totalPrice = record.liters ? calculateTotalPrice(record.fuelType, record.liters) : 'N/A';
+
+                return `
+                <tr>
+                    <td><strong>${record.requestId}</strong></td>
+                    <td>${record.driver}</td>
+                    <td>${record.vehicle}</td>
+                    <td>${record.gasStation}</td>
+                    <td>${record.fuelType}</td>
+                    <td>${record.liters ? record.liters + ' L' : 'N/A'}</td>
+                    <td>R$ ${pricePerLiter.toFixed(2)}</td>
+                    <td>${totalPrice !== 'N/A' ? 'R$ ' + totalPrice : 'N/A'}</td>
+                    <td>${record.realValue || 'Pendente'}</td>
+                    <td><span class="status-badge status-${record.status === 'completed' ? 'completed' : 'pending'}">${record.status === 'completed' ? 'Finalizado' : 'Pendente'}</span></td>
+                    <td>${formatDate(record.date)}</td>
+                    <td>
+                        <button class="btn btn-small" onclick="viewFuelRecord('${record.requestId}')">👁️</button>
+                        ${record.status === 'pending' ? `
+                            <button class="btn btn-small btn-success" onclick="editRealValue('${record.requestId}')">💰</button>
+                        ` : ''}
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        // Ações de requisições
+        function newRequest() {
+            document.getElementById('modal-new-request').classList.add('active');
+        }
+
+        function createRequest() {
+            const driver = document.getElementById('new-request-driver').value;
+            const plate = document.getElementById('new-request-plate').value;
+            const vehicleModel = document.getElementById('new-request-vehicle-model').value;
+            const city = document.getElementById('new-request-city').value;
+            const gasStation = document.getElementById('new-request-gas-station').value;
+            const fuelType = document.getElementById('new-request-fuel-type').value;
+            const km = document.getElementById('new-request-km').value;
+            const fuelMethod = document.getElementById('new-request-fuel-method').value;
+            const priority = document.getElementById('new-request-priority').value;
+            const notes = document.getElementById('new-request-notes').value;
+
+            if (!driver || !plate || !city || !gasStation || !fuelType || !km) {
+                showNotification('Por favor, preencha todos os campos obrigatórios!', 'error');
+                return;
+            }
+
+            const newId = `REQ-2025-${String(requests.length + 1).padStart(3, '0')}`;
+            const today = new Date().toISOString().split('T')[0];
+
+            const newRequest = {
+                id: newId,
+                driver: currentRole === 'motorista' ? 'Motorista Atual' : driver,
+                plate: plate,
+                vehicle: `${vehicleModel} - ${plate}`,
+                city: city,
+                gasStation: gasStation,
+                fuelType: fuelType,
+                fuelMethod: fuelMethod,
+                status: 'pending',
+                date: today,
+                supervisor: 'Pendente',
+                estimatedValue: 'A definir',
+                realValue: null,
+                km: parseInt(km),
+                priority: priority,
+                notes: notes || 'Sem observações'
+            };
+
+            requests.unshift(newRequest);
+
+            const newFuelRecord = {
+                requestId: newId,
+                driver: newRequest.driver,
+                vehicle: newRequest.vehicle,
+                gasStation: gasStation,
+                fuelType: fuelType,
+                estimatedValue: 'A definir',
+                realValue: null,
+                liters: null,
+                status: 'pending',
+                date: today,
+                notes: ''
+            };
+
+            fuelRecords.unshift(newFuelRecord);
+
+            autoSave();
+
+            loadRecentActivities();
+            loadAllRequests();
+            loadFuelRecords();
+            updateStats();
+
+            closeModal('modal-new-request');
+            clearForm('new-request');
+
+            showNotification(`Requisição ${newId} criada com sucesso!`, 'success');
+        }
+
+        function approveRequest(reqId) {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem aprovar requisições!', 'error');
+                return;
+            }
+
+            const request = requests.find(req => req.id === reqId);
+            if (request && request.status === 'pending') {
+                request.status = 'signed';
+                request.supervisor = 'Supervisor';
+
+                const fuelRecord = fuelRecords.find(record => record.requestId === reqId);
+                if (fuelRecord) {
+                    fuelRecord.status = 'pending';
+                }
+
+                autoSave();
+
+                loadRecentActivities();
+                loadAllRequests();
+                loadFuelRecords();
+                updateStats();
+
+                showNotification(`Requisição ${reqId} aprovada com sucesso!`, 'success');
+            }
+        }
+
+        function rejectRequest(reqId) {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem rejeitar requisições!', 'error');
+                return;
+            }
+
+            const request = requests.find(req => req.id === reqId);
+            if (request && request.status === 'pending') {
+                request.status = 'rejected';
+                request.supervisor = 'Supervisor';
+
+                autoSave();
+
+                loadRecentActivities();
+                loadAllRequests();
+                updateStats();
+
+                showNotification(`Requisição ${reqId} rejeitada!`, 'warning');
+            }
+        }
+
+        function markAsFueled(reqId) {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem marcar como abastecido!', 'error');
+                return;
+            }
+
+            const request = requests.find(req => req.id === reqId);
+            if (request && request.status === 'signed') {
+                showScreen('fuel-records');
+                showNotification(`Acesse o registro de abastecimento para finalizar a requisição ${reqId}`, 'warning');
+            }
+        }
+
+        function viewRequest(reqId) {
+            const request = requests.find(req => req.id === reqId);
+            if (request) {
+                const priorityText = {
+                    'normal': 'Normal',
+                    'urgent': 'Urgente',
+                    'emergency': 'Emergência'
+                };
+
+                const fuelMethodText = {
+                    'tanque': 'Tanque Completo',
+                    'galao': 'Galão'
+                };
+
+                alert(`
+📋 DETALHES DA REQUISIÇÃO ${reqId}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 Motorista: ${request.driver}
+🚚 Veículo: ${request.vehicle}
+🏙️ Cidade: ${request.city || 'N/A'}
+⛽ Posto: ${request.gasStation || 'N/A'}
+🛢️ Combustível: ${request.fuelType || 'N/A'}
+🔧 Tipo de Abastecimento: ${fuelMethodText[request.fuelMethod] || 'N/A'}
+📅 Data: ${formatDate(request.date)}
+👨‍💼 Supervisor: ${request.supervisor}
+💰 Valor Estimado: ${request.estimatedValue || request.value || 'N/A'}
+${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
+🛣️ Quilometragem: ${request.km ? request.km.toLocaleString() + ' km' : 'N/A'}
+⚡ Prioridade: ${priorityText[request.priority] || 'N/A'}
+📊 Status: ${getStatusText(request.status)}
+📝 Observações: ${request.notes}
+                `);
+            }
+        }
+
+        // Editar valor real - AGORA COM CÁLCULO AUTOMÁTICO
+        function editRealValue(requestId) {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem editar valores!', 'error');
+                return;
+            }
+
+            const record = fuelRecords.find(r => r.requestId === requestId);
+            if (!record) {
+                showNotification('Registro não encontrado!', 'error');
+                return;
+            }
+
+            document.getElementById('edit-request-id').value = record.requestId;
+            document.getElementById('edit-fuel-type').value = record.fuelType;
+
+            const unitPrice = fuelPrices[record.fuelType] || 0;
+            document.getElementById('edit-unit-price').value = `R$ ${unitPrice.toFixed(2)}`;
+
+            document.getElementById('edit-liters').value = record.liters || '';
+            document.getElementById('edit-total-price').value = record.liters ? `R$ ${calculateTotalPrice(record.fuelType, record.liters)}` : 'R$ 0.00';
+            document.getElementById('edit-real-value').value = record.realValue ? record.realValue.replace('R$ ', '').replace(',', '.') : '';
+            document.getElementById('edit-fuel-notes').value = record.notes || '';
+
+            document.getElementById('modal-edit-real-value').classList.add('active');
+        }
+
+        // Calcular preço total automaticamente
+        function calculateTotalPrice() {
+            const liters = parseFloat(document.getElementById('edit-liters').value) || 0;
+            const fuelType = document.getElementById('edit-fuel-type').value;
+
+            if (liters > 0 && fuelType) {
+                const totalPrice = calculateTotalPrice(fuelType, liters);
+                document.getElementById('edit-total-price').value = `R$ ${totalPrice}`;
+            } else {
+                document.getElementById('edit-total-price').value = 'R$ 0.00';
+            }
+        }
+
+        // Atualizar valor real
+        function updateRealValue() {
+            const requestId = document.getElementById('edit-request-id').value;
+            const realValue = document.getElementById('edit-real-value').value;
+            const liters = document.getElementById('edit-liters').value;
+            const notes = document.getElementById('edit-fuel-notes').value;
+
+            if (!realValue || !liters) {
+                showNotification('Por favor, preencha o valor real e a quantidade de litros!', 'error');
+                return;
+            }
+
+            const record = fuelRecords.find(r => r.requestId === requestId);
+            if (record) {
+                record.realValue = `R$ ${parseFloat(realValue).toFixed(2).replace('.', ',')}`;
+                record.liters = parseFloat(liters);
+                record.notes = notes || '';
+                record.status = 'completed';
+            }
+
+            const request = requests.find(req => req.id === requestId);
+            if (request) {
+                request.status = 'completed';
+                request.realValue = record.realValue;
+            }
+
+            autoSave();
+
+            loadRecentActivities();
+            loadAllRequests();
+            loadFuelRecords();
+            updateStats();
+
+            closeModal('modal-edit-real-value');
+
+            showNotification(`Abastecimento ${requestId} finalizado com sucesso!`, 'success');
+        }
+
+        // Visualizar registro de abastecimento
+        function viewFuelRecord(requestId) {
+            const record = fuelRecords.find(r => r.requestId === requestId);
+            if (record) {
+                const statusText = record.status === 'completed' ? 'Finalizado' : 'Pendente';
+
+                const pricePerLiter = fuelPrices[record.fuelType] || 0;
+                const totalPrice = record.liters ? calculateTotalPrice(record.fuelType, record.liters) : 'N/A';
+
+                alert(`
+⛽ DETALHES DO ABASTECIMENTO ${requestId}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 Motorista: ${record.driver}
+🚚 Veículo: ${record.vehicle}
+⛽ Posto: ${record.gasStation}
+🛢️ Combustível: ${record.fuelType}
+💰 Valor Estimado: ${record.estimatedValue}
+💰 Valor Real: ${record.realValue || 'Não informado'}
+📊 Litros: ${record.liters ? record.liters + ' L' : 'Não informado'}
+💵 Preço Unitário: R$ ${pricePerLiter.toFixed(2)}
+💵 Preço Total Calculado: ${totalPrice !== 'N/A' ? 'R$ ' + totalPrice : 'N/A'}
+📅 Data: ${formatDate(record.date)}
+📊 Status: ${statusText}
+📝 Observações: ${record.notes || 'Sem observações'}
+                `);
+            }
+        }
+
+        // Ações de veículos (apenas supervisor)
+        function newVehicle() {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem cadastrar veículos!', 'error');
+                return;
+            }
+            document.getElementById('modal-new-vehicle').classList.add('active');
+        }
+
+        function createVehicle() {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem cadastrar veículos!', 'error');
+                return;
+            }
+
+            const plate = document.getElementById('new-vehicle-plate').value.toUpperCase();
+            const model = document.getElementById('new-vehicle-model').value;
+            const year = document.getElementById('new-vehicle-year').value;
+            const color = document.getElementById('new-vehicle-color').value;
+            const km = document.getElementById('new-vehicle-km').value;
+            const notes = document.getElementById('new-vehicle-notes').value;
+
+            if (!plate || !model || !year) {
+                showNotification('Por favor, preencha todos os campos obrigatórios!', 'error');
+                return;
+            }
+
+            if (vehicles.find(v => v.plate === plate)) {
+                showNotification('Já existe um veículo cadastrado com essa placa!', 'error');
+                return;
+            }
+
+            const newVehicle = {
+                plate: plate,
+                model: `${model} ${year}`,
+                year: year,
+                km: parseInt(km) || 0,
+                lastFuel: 'Nunca',
+                status: 'Ativo',
+                color: color || 'Não informada',
+                notes: notes || 'Sem observações'
+            };
+
+            vehicles.push(newVehicle);
+
+            autoSave();
+
+            loadVehicles();
+            updateVehiclePlatesSelect();
+
+            closeModal('modal-new-vehicle');
+            clearForm('new-vehicle');
+
+            showNotification(`Veículo ${plate} cadastrado com sucesso!`, 'success');
+        }
+
+        function viewVehicle(plate) {
+            const vehicle = vehicles.find(v => v.plate === plate);
+            if (vehicle) {
+                alert(`
+🚚 DETALHES DO VEÍCULO ${plate}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚗 Modelo: ${vehicle.model}
+🎨 Cor: ${vehicle.color}
+🛣️ Quilometragem: ${vehicle.km.toLocaleString()} km
+⛽ Último Abastecimento: ${vehicle.lastFuel !== 'Nunca' ? formatDate(vehicle.lastFuel) : 'Nunca'}
+📊 Status: ${vehicle.status}
+📝 Observações: ${vehicle.notes || 'Sem observações'}
+                `);
+            }
+        }
+
+        function editVehicle(plate) {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem editar veículos!', 'error');
+                return;
+            }
+            showNotification(`Funcionalidade em desenvolvimento - Editar veículo ${plate}`, 'warning');
+        }
+
+        // Relatórios (apenas supervisor)
+        function generateReport() {
+            if (currentRole !== 'supervisor') return;
+
+            const period = document.getElementById('report-period')?.value || 'month';
+            const type = document.getElementById('report-type')?.value || 'summary';
+            const container = document.getElementById('report-content');
+
+            let reportContent = '';
+
+            switch(type) {
+                case 'consumption':
+                    reportContent = generateConsumptionReport();
+                    break;
+                case 'cost':
+                    reportContent = generateCostReport();
+                    break;
+                case 'efficiency':
+                    reportContent = generateEfficiencyReport();
+                    break;
+                default:
+                    reportContent = generateSummaryReport();
+            }
+
+            if(container) {
+                container.innerHTML = reportContent;
+            }
+        }
+
+        function generateSummaryReport() {
+            const completedRecords = fuelRecords.filter(r => r.status === 'completed');
+            const totalLiters = completedRecords.reduce((sum, r) => sum + (r.liters || 0), 0);
+            const totalRealValue = completedRecords.reduce((sum, r) => {
+                if (r.realValue) {
+                    const value = parseFloat(r.realValue.replace('R$ ', '').replace(',', '.'));
+                    return sum + value;
+                }
+                return sum;
+            }, 0);
+
+            return `
+                <div class="card" style="margin-top: 20px;">
+                    <h3>📊 Resumo Geral - Sistema Atual</h3>
+                    <div class="stats-grid" style="margin-top: 20px;">
+                        <div class="stat-card completed">
+                            <div class="stat-number">${requests.length}</div>
+                            <div class="stat-label">Total de Requisições</div>
+                        </div>
+                        <div class="stat-card fueled">
+                            <div class="stat-number">${totalLiters.toFixed(1)}</div>
+                            <div class="stat-label">Litros Abastecidos</div>
+                        </div>
+                        <div class="stat-card pending">
+                            <div class="stat-number">R$ ${totalRealValue.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                            <div class="stat-label">Valor Total Real</div>
+                        </div>
+                        <div class="stat-card signed">
+                            <div class="stat-number">${vehicles.length}</div>
+                            <div class="stat-label">Veículos Cadastrados</div>
+                        </div>
+                    </div>
+
+                    ${requests.length > 0 ? `
+                    <h4 style="margin: 25px 0 15px;">📈 Últimas Requisições</h4>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Motorista</th>
+                                    <th>Veículo</th>
+                                    <th>Status</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${requests.slice(0, 5).map(req => `
+                                <tr>
+                                    <td>${req.id}</td>
+                                    <td>${req.driver}</td>
+                                    <td>${req.vehicle}</td>
+                                    <td><span class="status-badge status-${req.status}">${getStatusText(req.status)}</span></td>
+                                    <td>${req.realValue || req.estimatedValue || req.value || 'N/A'}</td>
+                                </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    ` : '<p style="text-align: center; color: #64748b; padding: 20px;">Nenhuma requisição cadastrada ainda.</p>'}
+                </div>
+            `;
+        }
+
+        function generateConsumptionReport() {
+            const completedRecords = fuelRecords.filter(r => r.status === 'completed');
+
+            if (completedRecords.length === 0) {
+                return `
+                    <div class="card" style="margin-top: 20px;">
+                        <h3>⛽ Relatório de Consumo Detalhado</h3>
+                        <p style="text-align: center; color: #64748b; padding: 40px;">Nenhum abastecimento finalizado encontrado.</p>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="card" style="margin-top: 20px;">
+                    <h3>⛽ Relatório de Consumo Detalhado</h3>
+                    <div class="table-container" style="margin-top: 20px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Motorista</th>
+                                    <th>Veículo</th>
+                                    <th>Posto</th>
+                                    <th>Combustível</th>
+                                    <th>Litros</th>
+                                    <th>Valor Real</th>
+                                    <th>Preço/L</th>
+                                    <th>Preço Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${completedRecords.map(record => {
+                                    const value = parseFloat(record.realValue.replace('R$ ', '').replace(',', '.'));
+                                    const pricePerLiter = fuelPrices[record.fuelType] || (value / record.liters);
+                                    const totalPrice = calculateTotalPrice(record.fuelType, record.liters);
+                                    return `
+                                    <tr>
+                                        <td>${formatDate(record.date)}</td>
+                                        <td>${record.driver}</td>
+                                        <td>${record.vehicle}</td>
+                                        <td>${record.gasStation}</td>
+                                        <td>${record.fuelType}</td>
+                                        <td>${record.liters.toFixed(1)} L</td>
+                                        <td>${record.realValue}</td>
+                                        <td>R$ ${pricePerLiter.toFixed(2)}</td>
+                                        <td>R$ ${totalPrice}</td>
+                                    </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateCostReport() {
+            const completedRecords = fuelRecords.filter(r => r.status === 'completed');
+            const totalReal = completedRecords.reduce((sum, r) => {
+                const value = parseFloat(r.realValue.replace('R$ ', '').replace(',', '.'));
+                return sum + value;
+            }, 0);
+
+            const totalEstimated = fuelRecords.reduce((sum, r) => {
+                if (r.estimatedValue === 'A definir') return sum;
+                const value = parseFloat(r.estimatedValue.replace('R$ ', '').replace(',', '.'));
+                return sum + value;
+            }, 0);
+
+            const avgPerFueling = completedRecords.length > 0 ? totalReal / completedRecords.length : 0;
+            const variance = totalReal - totalEstimated;
+
+            return `
+                <div class="card" style="margin-top: 20px;">
+                    <h3>💰 Relatório de Custos</h3>
+                    <div class="stats-grid" style="margin-top: 20px;">
+                        <div class="stat-card pending">
+                            <div class="stat-number">R$ ${totalReal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                            <div class="stat-label">Gasto Total Real</div>
+                        </div>
+                        <div class="stat-card signed">
+                            <div class="stat-number">R$ ${totalEstimated.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                            <div class="stat-label">Total Estimado</div>
+                        </div>
+                        <div class="stat-card fueled">
+                            <div class="stat-number">R$ ${avgPerFueling.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                            <div class="stat-label">Média por Abastecimento</div>
+                        </div>
+                        <div class="stat-card ${variance >= 0 ? 'pending' : 'signed'}">
+                            <div class="stat-number">${variance >= 0 ? '+' : ''}R$ ${variance.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                            <div class="stat-label">Variação Real vs Estimado</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateEfficiencyReport() {
+            return `
+                <div class="card" style="margin-top: 20px;">
+                    <h3>🔋 Relatório de Eficiência Energética</h3>
+                    <p style="margin-bottom: 20px;">Análise de performance e economia de combustível da frota.</p>
+
+                    ${vehicles.length > 0 ? `
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Veículo</th>
+                                    <th>KM Atual</th>
+                                    <th>Último Abastecimento</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${vehicles.map(vehicle => `
+                                <tr>
+                                    <td>${vehicle.model} - ${vehicle.plate}</td>
+                                    <td>${vehicle.km.toLocaleString()} km</td>
+                                    <td>${vehicle.lastFuel}</td>
+                                    <td><span class="status-badge status-${vehicle.status === 'Ativo' ? 'completed' : 'pending'}">${vehicle.status}</span></td>
+                                </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    ` : '<p style="text-align: center; color: #64748b; padding: 20px;">Nenhum veículo cadastrado ainda.</p>'}
+                </div>
+            `;
+        }
+
+        // Exportação para Excel completa - AGORA COM PREÇO TOTAL
+        function exportToExcel(type) {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem exportar relatórios!', 'error');
+                return;
+            }
+
+            let workbook = XLSX.utils.book_new();
+
+            if (type === 'all' || !type) {
+                // Exportar todas as abas
+
+                // Aba 1: Requisições
+                if (requests.length > 0) {
+                    const requestsData = requests.map(req => ({
+                        'ID': req.id,
+                        'Motorista': req.driver,
+                        'Veículo': req.vehicle,
+                        'Cidade': req.city || 'N/A',
+                        'Posto': req.gasStation || 'N/A',
+                        'Combustível': req.fuelType || 'N/A',
+                        'Tipo Abastecimento': req.fuelMethod === 'tanque' ? 'Tanque Completo' : 'Galão',
+                        'Status': getStatusText(req.status),
+                        'Data': req.date,
+                        'Supervisor': req.supervisor,
+                        'Valor Estimado': req.estimatedValue || req.value || 'N/A',
+                        'Valor Real': req.realValue || 'N/A',
+                        'KM': req.km || 'N/A',
+                        'Prioridade': req.priority || 'N/A',
+                        'Observações': req.notes || ''
+                    }));
+
+                    const reqWs = XLSX.utils.json_to_sheet(requestsData);
+                    XLSX.utils.book_append_sheet(workbook, reqWs, "Requisições");
+                }
+
+                // Aba 2: Registro de Abastecimento (com preço total calculado)
+                if (fuelRecords.length > 0) {
+                    const fuelData = fuelRecords.map(record => {
+                        const liters = record.liters || 0;
+                        const fuelType = record.fuelType || '';
+                        const pricePerLiter = fuelPrices[fuelType] || 0;
+                        const totalPrice = liters > 0 ? (pricePerLiter * liters).toFixed(2) : 'N/A';
+
+                        return {
+                            'ID Requisição': record.requestId,
+                            'Motorista': record.driver,
+                            'Veículo': record.vehicle,
+                            'Posto': record.gasStation,
+                            'Combustível': record.fuelType,
+                            'Litros': record.liters ? record.liters + ' L' : 'N/A',
+                            'Preço Unitário (R$/L)': pricePerLiter > 0 ? `R$ ${pricePerLiter.toFixed(2)}` : 'N/A',
+                            'Preço Total': totalPrice !== 'N/A' ? `R$ ${totalPrice}` : 'N/A',
+                            'Valor Estimado': record.estimatedValue,
+                            'Valor Real': record.realValue || 'Pendente',
+                            'Status': record.status === 'completed' ? 'Finalizado' : 'Pendente',
+                            'Data': record.date,
+                            'Observações': record.notes || ''
+                        };
+                    });
+
+                    const fuelWs = XLSX.utils.json_to_sheet(fuelData);
+                    XLSX.utils.book_append_sheet(workbook, fuelWs, "Registro de Abastecimento");
+                }
+
+                // Aba 3: Veículos
+                if (vehicles.length > 0) {
+                    const vehiclesData = vehicles.map(vehicle => ({
+                        'Placa': vehicle.plate,
+                        'Modelo': vehicle.model,
+                        'Ano': vehicle.year,
+                        'Cor': vehicle.color || 'N/A',
+                        'KM Atual': vehicle.km || 0,
+                        'Último Abastecimento': vehicle.lastFuel,
+                        'Status': vehicle.status,
+                        'Observações': vehicle.notes || ''
+                    }));
+
+                    const vehiclesWs = XLSX.utils.json_to_sheet(vehiclesData);
+                    XLSX.utils.book_append_sheet(workbook, vehiclesWs, "Veículos");
+                }
+
+                // Aba 4: Preços de Combustíveis
+                const pricesData = Object.keys(fuelPrices)
+                    .filter(key => key !== 'lastUpdate')
+                    .map(fuelType => ({
+                        'Combustível': fuelType,
+                        'Preço (R$/L)': `R$ ${fuelPrices[fuelType].toFixed(2)}`,
+                        'Última Atualização': formatDate(fuelPrices.lastUpdate.split('T')[0])
+                    }));
+
+                const pricesWs = XLSX.utils.json_to_sheet(pricesData);
+                XLSX.utils.book_append_sheet(workbook, pricesWs, "Preços Combustíveis");
+
+                // Aba 5: Relatórios
+                const completedRecords = fuelRecords.filter(r => r.status === 'completed');
+                const totalLiters = completedRecords.reduce((sum, r) => sum + (r.liters || 0), 0);
+                const totalRealValue = completedRecords.reduce((sum, r) => {
+                    if (r.realValue) {
+                        const value = parseFloat(r.realValue.replace('R$ ', '').replace(',', '.'));
+                        return sum + value;
+                    }
+                    return sum;
+                }, 0);
+
+                const reportData = [
+                    {
+                        'Indicador': 'Total de Requisições',
+                        'Valor': requests.length,
+                        'Descrição': 'Número total de requisições no sistema'
+                    },
+                    {
+                        'Indicador': 'Requisições Pendentes',
+                        'Valor': requests.filter(req => req.status === 'pending').length,
+                        'Descrição': 'Aguardando aprovação do supervisor'
+                    },
+                    {
+                        'Indicador': 'Requisições Aprovadas',
+                        'Valor': requests.filter(req => req.status === 'signed').length,
+                        'Descrição': 'Aprovadas para abastecimento'
+                    },
+                    {
+                        'Indicador': 'Abastecimentos Realizados',
+                        'Valor': requests.filter(req => req.status === 'fueled').length,
+                        'Descrição': 'Processos de abastecimento em andamento'
+                    },
+                    {
+                        'Indicador': 'Processos Completos',
+                        'Valor': requests.filter(req => req.status === 'completed').length,
+                        'Descrição': 'Abastecimentos finalizados'
+                    },
+                    {
+                        'Indicador': 'Total de Veículos',
+                        'Valor': vehicles.length,
+                        'Descrição': 'Veículos cadastrados na frota'
+                    },
+                    {
+                        'Indicador': 'Litros Abastecidos',
+                        'Valor': totalLiters.toFixed(1) + ' L',
+                        'Descrição': 'Volume total de combustível'
+                    },
+                    {
+                        'Indicador': 'Valor Total Real',
+                        'Valor': 'R$ ' + totalRealValue.toLocaleString('pt-BR', {minimumFractionDigits: 2}),
+                        'Descrição': 'Custo total dos abastecimentos'
+                    }
+                ];
+
+                const reportWs = XLSX.utils.json_to_sheet(reportData);
+                XLSX.utils.book_append_sheet(workbook, reportWs, "Relatórios");
+
+            } else if (type === 'fuel-records') {
+                // Exportar apenas registro de abastecimento com preço total
+                const fuelData = fuelRecords.map(record => {
+                    const liters = record.liters || 0;
+                    const fuelType = record.fuelType || '';
+                    const pricePerLiter = fuelPrices[fuelType] || 0;
+                    const totalPrice = liters > 0 ? (pricePerLiter * liters).toFixed(2) : 'N/A';
+
+                    return {
+                        'ID Requisição': record.requestId,
+                        'Motorista': record.driver,
+                        'Veículo': record.vehicle,
+                        'Posto': record.gasStation,
+                        'Combustível': record.fuelType,
+                        'Litros': record.liters ? record.liters + ' L' : 'N/A',
+                        'Preço Unitário (R$/L)': pricePerLiter > 0 ? `R$ ${pricePerLiter.toFixed(2)}` : 'N/A',
+                        'Preço Total': totalPrice !== 'N/A' ? `R$ ${totalPrice}` : 'N/A',
+                        'Valor Estimado': record.estimatedValue,
+                        'Valor Real': record.realValue || 'Pendente',
+                        'Status': record.status === 'completed' ? 'Finalizado' : 'Pendente',
+                        'Data': record.date,
+                        'Observações': record.notes || ''
+                    };
+                });
+
+                if (fuelData.length === 0) {
+                    showNotification('Não há dados para exportar!', 'warning');
+                    return;
+                }
+
+                const ws = XLSX.utils.json_to_sheet(fuelData);
+                XLSX.utils.book_append_sheet(workbook, ws, "Registro de Abastecimento");
+            }
+
+            // Ajustar largura das colunas
+            const sheetNames = workbook.SheetNames;
+            sheetNames.forEach(sheetName => {
+                const ws = workbook.Sheets[sheetName];
+                if (ws['!ref']) {
+                    const range = XLSX.utils.decode_range(ws['!ref']);
+                    const wscols = [];
+                    for (let c = range.s.c; c <= range.e.c; ++c) {
+                        wscols.push({wch: 18});
+                    }
+                    ws['!cols'] = wscols;
+                }
+            });
+
+            // Gerar e baixar arquivo
+            const filename = type === 'all' || !type ?
+                `relatorio_completo_rezende_energia_${new Date().toISOString().split('T')[0]}.xlsx` :
+                `${type.replace('-', '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+            if (workbook.SheetNames.length === 0) {
+                showNotification('Não há dados para exportar!', 'warning');
+                return;
+            }
+
+            XLSX.writeFile(workbook, filename);
+
+            showNotification(`Arquivo ${filename} exportado com sucesso!`, 'success');
+        }
+
+        // Configurações e funcionalidades extras (apenas supervisor)
+        function saveSettings() {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem alterar configurações!', 'error');
+                return;
+            }
+            showNotification('Configurações salvas com sucesso!', 'success');
+        }
+
+        function backupData() {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem fazer backup!', 'error');
+                return;
+            }
+
+            const allData = {
+                requests: requests,
+                vehicles: vehicles,
+                fuelRecords: fuelRecords,
+                fuelPrices: fuelPrices,
+                timestamp: new Date().toISOString(),
+                version: 'v2.3.0'
+            };
+
+            const dataStr = JSON.stringify(allData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `backup_rezende_energia_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+
+            showNotification('Backup gerado e baixado com sucesso!', 'success');
+        }
+
+        function syncData() {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem sincronizar dados!', 'error');
+                return;
+            }
+
+            showNotification('Sincronizando dados...', 'warning');
+            setTimeout(() => {
+                showNotification('Dados sincronizados com sucesso!', 'success');
+            }, 2000);
+        }
+
+        function clearCache() {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem limpar cache!', 'error');
+                return;
+            }
+
+            if (confirm('Tem certeza que deseja limpar o cache? Esta ação não pode ser desfeita.')) {
+                localStorage.clear();
+                showNotification('Cache limpo com sucesso! Recarregue a página.', 'success');
+            }
+        }
+
+        // Utilitários
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function clearForm(prefix) {
+            const inputs = document.querySelectorAll(`[id^="${prefix}"]`);
+            inputs.forEach(input => {
+                if (input.type === 'text' || input.type === 'number' || input.type === 'email' || input.tagName === 'TEXTAREA') {
+                    input.value = '';
+                } else if (input.tagName === 'SELECT') {
+                    input.selectedIndex = 0;
+                }
+            });
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        // Atalhos de teclado
+        document.addEventListener('keydown', function(e) {
+            if (!isLoggedIn) return;
+
+            if (e.ctrlKey && e.key === 'n') {
+                e.preventDefault();
+                newRequest();
+            }
+
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.active').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            }
+
+            if (e.ctrlKey && e.key === 'l') {
+                e.preventDefault();
+                logout();
+            }
+        });
+
+        // Inicialização do sistema
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDataFromStorage();
+
+            setInterval(() => {
+                if (isLoggedIn) {
+                    autoSave();
+                }
+            }, 30000);
+
+            console.log('🚛 Sistema Rezende Energia v2.3.0 - Pronto para Login');
+
+            setTimeout(() => {
+                if (!isLoggedIn) {
+                    showNotification('Bem-vindo ao Sistema Rezende Energia! Faça login para começar.', 'success');
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
