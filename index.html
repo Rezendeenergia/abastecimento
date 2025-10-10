@@ -1224,13 +1224,13 @@
                         <h4>📊 Informações do Sistema</h4>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px;">
                             <div>
-                                <strong>Versão:</strong> v2.3.0<br>
-                                <strong>Último Backup:</strong> 29/09/2025<br>
+                                <strong>Versão:</strong> v2.3.1<br>
+                                <strong>Último Backup:</strong> <span id="last-backup-time">Nunca</span><br>
                                 <strong>Usuários Ativos:</strong> 12
                             </div>
                             <div>
                                 <strong>Total Requisições:</strong> <span id="total-requests">0</span><br>
-                                <strong>Espaço Usado:</strong> 124 MB<br>
+                                <strong>Espaço Usado:</strong> <span id="storage-used">0 KB</span><br>
                                 <strong>Uptime:</strong> 99.8%
                             </div>
                         </div>
@@ -1401,6 +1401,26 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
+        // ==================== VERIFICAÇÃO DE SUPORTE AO LOCALSTORAGE ====================
+        function checkLocalStorageSupport() {
+            try {
+                const test = '__localStorage_test__';
+                localStorage.setItem(test, test);
+                localStorage.removeItem(test);
+                console.log('✅ localStorage está disponível e funcionando');
+                return true;
+            } catch (e) {
+                console.error('❌ localStorage NÃO está disponível:', e);
+                alert('⚠️ ATENÇÃO: O armazenamento local não está disponível!\n\n' +
+                      'Possíveis causas:\n' +
+                      '- Modo privado/anônimo do navegador\n' +
+                      '- Configurações de privacidade bloqueando\n' +
+                      '- Quota de armazenamento excedida\n\n' +
+                      'Os dados NÃO serão salvos ao recarregar a página!');
+                return false;
+            }
+        }
+
         // Estado global da aplicação
         let currentRole = '';
         let isLoggedIn = false;
@@ -1484,216 +1504,36 @@
 
         // Lista inicial de veículos para popular o sistema
         const initialVehicles = [
-            {
-                plate: 'BCQ0937',
-                model: 'F4000',
-                year: '2023',
-                status: 'Ativo',
-                color: 'Branca'
-            },
-            {
-                plate: 'JJB4E57',
-                model: 'CARGO 1217',
-                year: '2002',
-                status: 'Ativo',
-                color: 'Branco'
-            },
-            {
-                plate: 'NCF3078',
-                model: 'L200 OUTDOOR',
-                year: '2004',
-                status: 'Ativo',
-                color: 'Prata'
-            },
-            {
-                plate: 'NFW2H74',
-                model: 'CARGO 1317F',
-                year: '2002',
-                status: 'Ativo',
-                color: 'Branco'
-            },
-            {
-                plate: 'NRP2E59',
-                model: 'L200 TRITON 3.2 D',
-                year: '2016',
-                status: 'Ativo',
-                color: 'Prata'
-            },
-            {
-                plate: 'OFP1B78',
-                model: '13.190 CRM 4X2',
-                year: '2020',
-                status: 'Ativo',
-                color: 'Branco'
-            },
-            {
-                plate: 'OGI3J31',
-                model: 'L200 TRITON 3.2 D',
-                year: '2016',
-                status: 'Ativo',
-                color: 'Branco'
-            },
-            {
-                plate: 'OLI7180',
-                model: 'L200 TRITON GLS D',
-                year: '2016',
-                status: 'Ativo',
-                color: 'Branco'
-            },
-            {
-                plate: 'PHK5D53',
-                model: 'STRADA FREEDOM CD13',
-                year: '2022',
-                status: 'Ativo',
-                color: 'Prata'
-            },
-            {
-                plate: 'PHL2H91',
-                model: 'S10 LT',
-                year: '2016',
-                status: 'Ativo',
-                color: 'Branco'
-            },
-            {
-                plate: 'PHL8286',
-                model: 'STRADA FREEDOM CD13',
-                year: '2014',
-                status: 'Ativo',
-                color: 'Prata'
-            },
-            {
-                plate: 'RXE8A01',
-                model: 'SAVEIRO CS RB MF',
-                year: '2018',
-                status: 'Ativo',
-                color: 'Branco'
-            },
-            {
-                plate: 'PVA2J86',
-                model: 'SAVEIRO CS RB MF',
-                year: '2016',
-                status: 'Ativo',
-                color: 'Prata'
-            },
-            {
-                plate: 'SHF6D51',
-                model: 'TECTOR 170E21',
-                year: '2023',
-                status: 'Ativo',
-                color: 'Branco'
-            },
-            {
-                plate: 'SHK5E03',
-                model: 'TECTOR 170E21',
-                year: '2023',
-                status: 'Ativo',
-                color: 'Branco'
-            },
-            {
-                plate: 'SYN1C01',
-                model: 'TECTOR 170E21',
-                year: '2023',
-                status: 'Ativo',
-                color: 'Branco'
-            },
-            {
-                plate: 'TAU9G16',
-                model: '17.210 CRM 4X2',
-                year: '2024',
-                status: 'Ativo',
-                color: 'Branco'
-            },
-            {
-                plate: 'TAU9G17',
-                model: '17.210 CRM 4X2',
-                year: '2024',
-                status: 'Ativo',
-                color: 'Branco'
-            },
-            {
-                plate: 'TDT0133',
-                model: 'STRADA FREEDOM CD13',
-                year: '2022',
-                status: 'Ativo',
-                color: 'Branco'
-            },
-            {
-                plate: 'TDT3G89',
-                model: 'STRADA FREEDOM CD13',
-                year: '2022',
-                status: 'Ativo',
-                color: 'Branco'
-            },
-            {
-                plate: 'TDT3H12',
-                model: 'STRADA FREEDOM CD13',
-                year: '2022',
-                status: 'Ativo',
-                color: 'Branco'
-            },
-            {
-                plate: 'TDT3H26',
-                model: 'STRADA FREEDOM CD13',
-                year: '2022',
-                status: 'Ativo',
-                color: 'Branco'
-            },
-            {
-                plate: 'CATAMARÃ 1',
-                model: 'CATAMARÃ',
-                year: '2023',
-                status: 'Ativo',
-                color: 'Branca'
-            },
-            {
-                plate: 'CATAMARÃ 2',
-                model: 'CATAMARÃ',
-                year: '2023',
-                status: 'Ativo',
-                color: 'Branca'
-            },
-            {
-                plate: 'RETROESCAVADEIRA 1',
-                model: 'RETROESCAVADEIRA',
-                year: '2023',
-                status: 'Ativo',
-                color: 'Branca'
-            },
-            {
-                plate: 'RETROESCAVADEIRA 2',
-                model: 'RETROESCAVADEIRA',
-                year: '2023',
-                status: 'Ativo',
-                color: 'Branca'
-            },
-            {
-                plate: 'RETROESCAVADEIRA 3',
-                model: 'RETROESCAVADEIRA',
-                year: '2023',
-                status: 'Ativo',
-                color: 'Branca'
-            },
-            {
-                plate: 'QZK5H16',
-                model: 'S10 LTZ',
-                year: '2024',
-                status: 'Ativo',
-                color: 'PRETA'
-            },
-            {
-                plate: 'TGM0373',
-                model: 'HILUX SRX',
-                year: '2022',
-                status: 'Ativo',
-                color: 'PRETA'
-            },
-            {
-                plate: 'QVN99H33',
-                model: 'HB20',
-                year: '2022',
-                status: 'Ativo',
-                color: 'BRANCA'
-            }
+            { plate: 'BCQ0937', model: 'F4000', year: '2023', status: 'Ativo', color: 'Branca', km: 0, lastFuel: 'Nunca' },
+            { plate: 'JJB4E57', model: 'CARGO 1217', year: '2002', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
+            { plate: 'NCF3078', model: 'L200 OUTDOOR', year: '2004', status: 'Ativo', color: 'Prata', km: 0, lastFuel: 'Nunca' },
+            { plate: 'NFW2H74', model: 'CARGO 1317F', year: '2002', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
+            { plate: 'NRP2E59', model: 'L200 TRITON 3.2 D', year: '2016', status: 'Ativo', color: 'Prata', km: 0, lastFuel: 'Nunca' },
+            { plate: 'OFP1B78', model: '13.190 CRM 4X2', year: '2020', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
+            { plate: 'OGI3J31', model: 'L200 TRITON 3.2 D', year: '2016', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
+            { plate: 'OLI7180', model: 'L200 TRITON GLS D', year: '2016', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
+            { plate: 'PHK5D53', model: 'STRADA FREEDOM CD13', year: '2022', status: 'Ativo', color: 'Prata', km: 0, lastFuel: 'Nunca' },
+            { plate: 'PHL2H91', model: 'S10 LT', year: '2016', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
+            { plate: 'PHL8286', model: 'STRADA FREEDOM CD13', year: '2014', status: 'Ativo', color: 'Prata', km: 0, lastFuel: 'Nunca' },
+            { plate: 'RXE8A01', model: 'SAVEIRO CS RB MF', year: '2018', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
+            { plate: 'PVA2J86', model: 'SAVEIRO CS RB MF', year: '2016', status: 'Ativo', color: 'Prata', km: 0, lastFuel: 'Nunca' },
+            { plate: 'SHF6D51', model: 'TECTOR 170E21', year: '2023', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
+            { plate: 'SHK5E03', model: 'TECTOR 170E21', year: '2023', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
+            { plate: 'SYN1C01', model: 'TECTOR 170E21', year: '2023', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
+            { plate: 'TAU9G16', model: '17.210 CRM 4X2', year: '2024', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
+            { plate: 'TAU9G17', model: '17.210 CRM 4X2', year: '2024', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
+            { plate: 'TDT0133', model: 'STRADA FREEDOM CD13', year: '2022', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
+            { plate: 'TDT3G89', model: 'STRADA FREEDOM CD13', year: '2022', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
+            { plate: 'TDT3H12', model: 'STRADA FREEDOM CD13', year: '2022', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
+            { plate: 'TDT3H26', model: 'STRADA FREEDOM CD13', year: '2022', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
+            { plate: 'CATAMARÃ 1', model: 'CATAMARÃ', year: '2023', status: 'Ativo', color: 'Branca', km: 0, lastFuel: 'Nunca' },
+            { plate: 'CATAMARÃ 2', model: 'CATAMARÃ', year: '2023', status: 'Ativo', color: 'Branca', km: 0, lastFuel: 'Nunca' },
+            { plate: 'RETROESCAVADEIRA 1', model: 'RETROESCAVADEIRA', year: '2023', status: 'Ativo', color: 'Branca', km: 0, lastFuel: 'Nunca' },
+            { plate: 'RETROESCAVADEIRA 2', model: 'RETROESCAVADEIRA', year: '2023', status: 'Ativo', color: 'Branca', km: 0, lastFuel: 'Nunca' },
+            { plate: 'RETROESCAVADEIRA 3', model: 'RETROESCAVADEIRA', year: '2023', status: 'Ativo', color: 'Branca', km: 0, lastFuel: 'Nunca' },
+            { plate: 'QZK5H16', model: 'S10 LTZ', year: '2024', status: 'Ativo', color: 'PRETA', km: 0, lastFuel: 'Nunca' },
+            { plate: 'TGM0373', model: 'HILUX SRX', year: '2022', status: 'Ativo', color: 'PRETA', km: 0, lastFuel: 'Nunca' },
+            { plate: 'QVN99H33', model: 'HB20', year: '2022', status: 'Ativo', color: 'BRANCA', km: 0, lastFuel: 'Nunca' }
         ];
 
         // Dados do sistema
@@ -1701,7 +1541,7 @@
         let vehicles = [];
         let fuelRecords = [];
 
-        // Preços de combustíveis - AGORA COM LISTA EDITÁVEL
+        // Preços de combustíveis
         let fuelPrices = {
             'Diesel S10': 6.69,
             'Diesel Comum': 6.10,
@@ -1711,6 +1551,175 @@
             'GNV': 5.13,
             lastUpdate: new Date().toISOString()
         };
+
+        // ==================== SISTEMA DE ARMAZENAMENTO COM DEBUG ====================
+
+        function autoSave() {
+            try {
+                const data = {
+                    requests: requests,
+                    vehicles: vehicles,
+                    fuelRecords: fuelRecords,
+                    fuelPrices: fuelPrices,
+                    lastSave: new Date().toISOString()
+                };
+
+                localStorage.setItem('rezende-energia-data', JSON.stringify(data));
+
+                // Debug: Verificar se salvou
+                const verificacao = localStorage.getItem('rezende-energia-data');
+                console.log('✅ Dados salvos com sucesso!', {
+                    requisicoes: requests.length,
+                    veiculos: vehicles.length,
+                    registros: fuelRecords.length,
+                    tamanho: (JSON.stringify(data).length / 1024).toFixed(2) + ' KB',
+                    verificado: verificacao !== null,
+                    timestamp: new Date().toLocaleString('pt-BR')
+                });
+
+                // Atualizar informações do sistema
+                updateSystemInfo();
+
+                return true;
+            } catch (e) {
+                console.error('❌ ERRO ao salvar dados:', e);
+                showNotification('Erro ao salvar dados: ' + e.message, 'error');
+                return false;
+            }
+        }
+
+        function loadDataFromStorage() {
+            try {
+                console.log('🔄 Tentando carregar dados do localStorage...');
+
+                const saved = localStorage.getItem('rezende-energia-data');
+
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    requests = data.requests || [];
+                    vehicles = data.vehicles && data.vehicles.length > 0 ? data.vehicles : [...initialVehicles];
+                    fuelRecords = data.fuelRecords || [];
+                    fuelPrices = data.fuelPrices || fuelPrices;
+
+                    if (vehicles.length === 0) {
+                        vehicles = [...initialVehicles];
+                    }
+
+                    console.log('✅ Dados carregados com sucesso!', {
+                        requisicoes: requests.length,
+                        veiculos: vehicles.length,
+                        registrosAbastecimento: fuelRecords.length,
+                        ultimoSalvamento: data.lastSave ? new Date(data.lastSave).toLocaleString('pt-BR') : 'Não disponível'
+                    });
+
+                } else {
+                    console.log('⚠️ Nenhum dado salvo encontrado. Inicializando veículos padrão...');
+                    requests = [];
+                    vehicles = [...initialVehicles];
+                    fuelRecords = [];
+                    autoSave();
+                }
+
+                updateSystemInfo();
+            } catch (e) {
+                console.error('❌ ERRO ao carregar dados:', e);
+                showNotification('Erro ao carregar dados salvos. Iniciando sistema limpo.', 'error');
+                requests = [];
+                vehicles = [...initialVehicles];
+                fuelRecords = [];
+            }
+        }
+
+        // ==================== SISTEMA DE BACKUP AUTOMÁTICO ====================
+
+        function autoBackupToFile() {
+            try {
+                const data = {
+                    requests: requests,
+                    vehicles: vehicles,
+                    fuelRecords: fuelRecords,
+                    fuelPrices: fuelPrices,
+                    timestamp: new Date().toISOString()
+                };
+
+                // Salvar no localStorage de backup
+                localStorage.setItem('rezende-energia-backup', JSON.stringify(data));
+
+                console.log('💾 Backup automático criado', {
+                    requisicoes: requests.length,
+                    veiculos: vehicles.length,
+                    registros: fuelRecords.length,
+                    timestamp: new Date().toLocaleString('pt-BR')
+                });
+
+                // Atualizar informações do sistema
+                const lastBackupElement = document.getElementById('last-backup-time');
+                if (lastBackupElement) {
+                    lastBackupElement.textContent = new Date().toLocaleString('pt-BR');
+                }
+
+                return true;
+            } catch (e) {
+                console.error('❌ Erro ao criar backup automático:', e);
+                return false;
+            }
+        }
+
+        function restoreFromBackup() {
+            try {
+                const backup = localStorage.getItem('rezende-energia-backup');
+                const mainData = localStorage.getItem('rezende-energia-data');
+
+                if (backup && !mainData) {
+                    console.log('🔄 Dados principais não encontrados. Restaurando do backup...');
+                    const data = JSON.parse(backup);
+                    localStorage.setItem('rezende-energia-data', JSON.stringify(data));
+                    showNotification('Dados restaurados do backup automático!', 'success');
+                    return true;
+                }
+
+                if (backup && mainData) {
+                    const backupData = JSON.parse(backup);
+                    const currentData = JSON.parse(mainData);
+
+                    const backupTime = new Date(backupData.timestamp).getTime();
+                    const currentTime = new Date(currentData.lastSave || 0).getTime();
+
+                    // Restaurar se o backup for mais recente E tiver mais dados
+                    if (backupTime > currentTime && backupData.requests.length > currentData.requests.length) {
+                        console.log('🔄 Backup mais recente encontrado. Restaurando...');
+                        localStorage.setItem('rezende-energia-data', JSON.stringify(backupData));
+                        showNotification('Dados restaurados do backup mais recente!', 'warning');
+                        return true;
+                    }
+                }
+
+                return false;
+            } catch (e) {
+                console.error('❌ Erro ao restaurar backup:', e);
+                return false;
+            }
+        }
+
+        function updateSystemInfo() {
+            try {
+                const totalElement = document.getElementById('total-requests');
+                if (totalElement) {
+                    totalElement.textContent = requests.length;
+                }
+
+                const storageElement = document.getElementById('storage-used');
+                if (storageElement) {
+                    const data = localStorage.getItem('rezende-energia-data');
+                    if (data) {
+                        const sizeKB = (data.length / 1024).toFixed(2);
+                        storageElement.textContent = sizeKB + ' KB';
+                    }
+                }
+            } catch (e) {
+                console.error('Erro ao atualizar informações do sistema:', e);
+            }
+        }
 
         // Função para calcular preço total baseado em litros e tipo de combustível
         function calculateTotalPrice(fuelType, liters) {
@@ -1737,6 +1746,7 @@
             };
 
             autoSave();
+            autoBackupToFile();
             loadFuelPricesList();
             showNotification('Preços de combustíveis salvos com sucesso!', 'success');
         }
@@ -1781,45 +1791,6 @@
                 vehicles = [...initialVehicles];
                 autoSave();
                 console.log('Veículos iniciais carregados no sistema');
-            }
-        }
-
-        // Sistema de armazenamento local
-        function autoSave() {
-            const data = {
-                requests: requests,
-                vehicles: vehicles,
-                fuelRecords: fuelRecords,
-                fuelPrices: fuelPrices,
-                lastSave: new Date().toISOString()
-            };
-            localStorage.setItem('rezende-energia-data', JSON.stringify(data));
-        }
-
-        function loadDataFromStorage() {
-            const saved = localStorage.getItem('rezende-energia-data');
-            if (saved) {
-                try {
-                    const data = JSON.parse(saved);
-                    requests = data.requests || [];
-                    vehicles = data.vehicles && data.vehicles.length > 0 ? data.vehicles : [...initialVehicles];
-                    fuelRecords = data.fuelRecords || [];
-                    fuelPrices = data.fuelPrices || fuelPrices;
-
-                    if (vehicles.length === 0) {
-                        vehicles = [...initialVehicles];
-                    }
-                } catch (e) {
-                    console.error('Erro ao carregar dados salvos:', e);
-                    requests = [];
-                    vehicles = [...initialVehicles];
-                    fuelRecords = [];
-                }
-            } else {
-                requests = [];
-                vehicles = [...initialVehicles];
-                fuelRecords = [];
-                autoSave();
             }
         }
 
@@ -2146,7 +2117,8 @@
                         <button class="btn btn-small" onclick="viewRequest('${req.id}')">👁️</button>
                         ${currentRole === 'supervisor' && req.status === 'pending' ? `
                             <button class="btn btn-small btn-success" onclick="approveRequest('${req.id}')">✅</button>
-                            <button class="btn btn-small btn-danger" onclick="rejectRequest('${req.id}')">❌</button>
+                            <button class="btn btn
+        -small btn-danger" onclick="rejectRequest('${req.id}')">❌</button>
                         ` : ''}
                         ${currentRole === 'supervisor' && req.status === 'signed' ? `
                             <button class="btn btn-small btn-warning" onclick="markAsFueled('${req.id}')">⛽</button>
@@ -2229,7 +2201,7 @@
             `).join('');
         }
 
-        // Carregar registros de abastecimento - AGORA COM PREÇO TOTAL
+        // Carregar registros de abastecimento
         function loadFuelRecords() {
             if (currentRole !== 'supervisor') return;
 
@@ -2517,6 +2489,7 @@
             fuelRecords.unshift(newFuelRecord);
 
             autoSave();
+            autoBackupToFile(); // ✅ BACKUP AUTOMÁTICO
 
             loadRecentActivities();
             loadAllRequests();
@@ -2546,6 +2519,7 @@
                 }
 
                 autoSave();
+                autoBackupToFile(); // ✅ BACKUP AUTOMÁTICO
 
                 loadRecentActivities();
                 loadAllRequests();
@@ -2568,6 +2542,7 @@
                 request.supervisor = 'Supervisor';
 
                 autoSave();
+                autoBackupToFile(); // ✅ BACKUP AUTOMÁTICO
 
                 loadRecentActivities();
                 loadAllRequests();
@@ -2625,7 +2600,7 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
             }
         }
 
-        // Editar valor real - AGORA COM CÁLCULO AUTOMÁTICO
+        // Editar valor real
         function editRealValue(requestId) {
             if (currentRole !== 'supervisor') {
                 showNotification('Apenas supervisores podem editar valores!', 'error');
@@ -2653,7 +2628,7 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
         }
 
         // Calcular preço total automaticamente
-        function calculateTotalPrice() {
+        function calculateTotalPriceModal() {
             const liters = parseFloat(document.getElementById('edit-liters').value) || 0;
             const fuelType = document.getElementById('edit-fuel-type').value;
 
@@ -2692,6 +2667,7 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
             }
 
             autoSave();
+            autoBackupToFile(); // ✅ BACKUP AUTOMÁTICO
 
             loadRecentActivities();
             loadAllRequests();
@@ -2777,6 +2753,7 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
             vehicles.push(newVehicle);
 
             autoSave();
+            autoBackupToFile(); // ✅ BACKUP AUTOMÁTICO
 
             loadVehicles();
             updateVehiclePlatesSelect();
@@ -3035,7 +3012,7 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
             `;
         }
 
-        // Exportação para Excel completa - AGORA COM PREÇO TOTAL
+        // Exportação para Excel completa
         function exportToExcel(type) {
             if (currentRole !== 'supervisor') {
                 showNotification('Apenas supervisores podem exportar relatórios!', 'error');
@@ -3071,7 +3048,7 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
                     XLSX.utils.book_append_sheet(workbook, reqWs, "Requisições");
                 }
 
-                // Aba 2: Registro de Abastecimento (com preço total calculado)
+                // Aba 2: Registro de Abastecimento
                 if (fuelRecords.length > 0) {
                     const fuelData = fuelRecords.map(record => {
                         const liters = record.liters || 0;
@@ -3187,7 +3164,7 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
                 XLSX.utils.book_append_sheet(workbook, reportWs, "Relatórios");
 
             } else if (type === 'fuel-records') {
-                // Exportar apenas registro de abastecimento com preço total
+                // Exportar apenas registro de abastecimento
                 const fuelData = fuelRecords.map(record => {
                     const liters = record.liters || 0;
                     const fuelType = record.fuelType || '';
@@ -3249,14 +3226,7 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
             showNotification(`Arquivo ${filename} exportado com sucesso!`, 'success');
         }
 
-        // Configurações e funcionalidades extras (apenas supervisor)
-        function saveSettings() {
-            if (currentRole !== 'supervisor') {
-                showNotification('Apenas supervisores podem alterar configurações!', 'error');
-                return;
-            }
-            showNotification('Configurações salvas com sucesso!', 'success');
-        }
+        // ==================== FUNÇÕES DE BACKUP MANUAL ====================
 
         function backupData() {
             if (currentRole !== 'supervisor') {
@@ -3270,7 +3240,7 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
                 fuelRecords: fuelRecords,
                 fuelPrices: fuelPrices,
                 timestamp: new Date().toISOString(),
-                version: 'v2.3.0'
+                version: 'v2.3.1'
             };
 
             const dataStr = JSON.stringify(allData, null, 2);
@@ -3284,6 +3254,15 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
             showNotification('Backup gerado e baixado com sucesso!', 'success');
         }
 
+        // Configurações e funcionalidades extras
+        function saveSettings() {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem alterar configurações!', 'error');
+                return;
+            }
+            showNotification('Configurações salvas com sucesso!', 'success');
+        }
+
         function syncData() {
             if (currentRole !== 'supervisor') {
                 showNotification('Apenas supervisores podem sincronizar dados!', 'error');
@@ -3292,6 +3271,8 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
 
             showNotification('Sincronizando dados...', 'warning');
             setTimeout(() => {
+                autoSave();
+                autoBackupToFile();
                 showNotification('Dados sincronizados com sucesso!', 'success');
             }, 2000);
         }
@@ -3355,17 +3336,26 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
             }
         });
 
-        // Inicialização do sistema
+        // ==================== INICIALIZAÇÃO DO SISTEMA ====================
         document.addEventListener('DOMContentLoaded', function() {
+            // Verificar suporte ao localStorage PRIMEIRO
+            checkLocalStorageSupport();
+
+            // Tentar restaurar do backup primeiro
+            restoreFromBackup();
+
             loadDataFromStorage();
 
+            // Backup automático a cada 30 segundos quando logado
             setInterval(() => {
                 if (isLoggedIn) {
                     autoSave();
+                    autoBackupToFile();
                 }
             }, 30000);
 
-            console.log('🚛 Sistema Rezende Energia v2.3.0 - Pronto para Login');
+            console.log('🚛 Sistema Rezende Energia v2.3.1 - Pronto para Login');
+            console.log('📊 Sistema de Backup Automático: ✅ Ativado');
 
             setTimeout(() => {
                 if (!isLoggedIn) {
