@@ -131,8 +131,8 @@
             box-shadow: 0 8px 25px rgba(26, 26, 26, 0.4);
         }
 
-        /* Supervisor Login Form */
-        .supervisor-login {
+        /* Login Forms */
+        .login-form {
             display: none;
             margin-top: 20px;
         }
@@ -757,12 +757,24 @@
             <p class="login-subtitle">Sistema de Gestão de Abastecimento</p>
 
             <div class="role-buttons" id="role-selection">
-                <button class="role-btn" onclick="loginAsDriver()">🚛 Entrar como Motorista</button>
+                <button class="role-btn" onclick="showDriverLogin()">🚛 Entrar como Motorista</button>
                 <button class="role-btn supervisor" onclick="showSupervisorLogin()">👨‍💼 Entrar como Supervisor</button>
             </div>
 
-            <!-- Formulário de login do supervisor -->
-            <div class="supervisor-login" id="supervisor-login">
+            <!-- Login do Motorista -->
+            <div class="login-form" id="driver-login">
+                <div class="form-group">
+                    <label>Selecione seu nome:</label>
+                    <select id="driver-name">
+                        <option value="">Selecione seu nome</option>
+                    </select>
+                </div>
+                <button class="role-btn" onclick="loginAsDriver()">Entrar</button>
+                <button class="role-btn" style="margin-top: 10px; background: #64748b;" onclick="backToRoleSelection()">Voltar</button>
+            </div>
+
+            <!-- Login do Supervisor -->
+            <div class="login-form" id="supervisor-login">
                 <div class="form-group">
                     <label>Usuário:</label>
                     <input type="text" id="supervisor-username" placeholder="Digite seu usuário">
@@ -777,26 +789,7 @@
         </div>
     </div>
 
-    <!-- Modal para escolher nome do motorista -->
-    <div id="modal-driver-selection" class="modal">
-        <div class="modal-content">
-            <span class="modal-close" onclick="closeModal('modal-driver-selection')">&times;</span>
-            <h3 style="margin-bottom: 20px;">👤 Selecione seu nome</h3>
-            
-            <div class="form-group">
-                <label>Seu Nome:</label>
-                <select id="driver-name-select" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
-                    <option value="">Selecione seu nome</option>
-                </select>
-            </div>
-            
-            <button class="role-btn" onclick="confirmDriverSelection()" style="width: 100%; margin-top: 20px;">
-                Confirmar e Entrar
-            </button>
-        </div>
-    </div>
-
-    <!-- Resto do código HTML permanece igual -->
+    <!-- Main Application -->
     <div class="container" id="main-app" style="display: none;">
         <!-- Header -->
         <div class="header">
@@ -929,8 +922,41 @@
                 </div>
             </div>
 
-            <!-- Resto das telas permanecem iguais -->
-            <!-- ... -->
+            <!-- Requests Screen -->
+            <div id="requests" class="screen">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">📋 Todas as Requisições</div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn" onclick="newRequest()">Nova Requisição</button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Motorista</th>
+                                    <th>Veículo</th>
+                                    <th>Cidade</th>
+                                    <th>Posto</th>
+                                    <th>Combustível</th>
+                                    <th>Status</th>
+                                    <th>Data</th>
+                                    <th>Supervisor</th>
+                                    <th>Valor Est.</th>
+                                    <th>KM</th>
+                                    <th id="requests-actions-header">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-requests">
+                                <!-- Preenchido via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -939,7 +965,7 @@
         <div class="modal-content">
             <span class="modal-close" onclick="closeModal('modal-new-request')">&times;</span>
             <h3 style="margin-bottom: 20px;">📋 Nova Requisição de Abastecimento</h3>
-            
+
             <div class="form-grid">
                 <div class="form-group">
                     <label>Motorista: <span style="color: red;">*</span></label>
@@ -993,12 +1019,12 @@
                     </select>
                 </div>
             </div>
-            
+
             <div class="form-group">
                 <label>Observações:</label>
                 <textarea id="new-request-notes" rows="3" placeholder="Observações adicionais..."></textarea>
             </div>
-            
+
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button class="btn" onclick="createRequest()" style="flex: 1;">Criar Requisição</button>
                 <button class="btn btn-secondary" onclick="closeModal('modal-new-request')" style="flex: 1;">Cancelar</button>
@@ -1009,7 +1035,6 @@
     <!-- Notificação -->
     <div id="notification" class="notification"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         // Estado global da aplicação
         let currentRole = '';
@@ -1038,24 +1063,40 @@
 
         // Lista de motoristas disponíveis
         const availableDrivers = [
-            'ABRAÃO TRINDADE ALBUQUERQUE', 'AIRTON VINICIUS DOS SANTOS OLIVEIRA',
-            'ALAN DENNER PINTO DE SOUZA', 'ALESSANDRO OZITIO CAMPELO',
-            'ARLISON NESTOR DA CONCEIÇÃO', 'CARLOS ALBERTO DOS SANTOS',
-            'CIDARTA REGIS DE SOUZA', 'DANIEL PINTO PEDROSO',
-            'DARLEN WILSON FERREIRA SILVA', 'DINEY RODRIGUES DOS PASSOS',
-            'EDER JUNIOR PAPALEO DA SILVA', 'EDINEI DA SILVA FERREIRA',
-            'EDUARDO PINHEIRO RODRIGUES', 'HELIO BARBOSA COSTA',
-            'JACKSOM AMARAL DA SILVA', 'JANILDO PORTILHO SANTOS FILHO',
-            'JOÃO BATISTA DA SILVA BEZERRA', 'JOELSON MONTEIRO PEREIRA',
-            'JOSIVAN MACIEL DOS REIS', 'JUAN FABRICIO RODRIGUES DE LIMA',
-            'JUNIPERO MANOEL DA SILVA LOPES', 'KLEBER JOSE DOS SANTOS PEREIRA',
-            'MARCIO FERREIRA SABOIA', 'MARCOS ANDRE MENDES PEREIRA',
-            'MARIVALDO DE JESUS CORREA', 'MARLISSON FEITOSA BEZERRA',
-            'MATHEUS TRINDADE DE ALMEIDA', 'MICHAEL LUAN DOS SANTOS SILVA',
-            'NILTON MARCOS MOTA CAMPOS', 'RENILDO FERREIRA LAVAREDA',
-            'RIAN TEIXEIRA SIQUEIRA', 'ROMÁRIO LIMA RIKER',
-            'LEONARDO NANTES ALVES', 'JARLISSON FABIO SANTOS DE SOUSA',
-            'PEDRO HUEB TAPXURE CURRY', 'RAFAEL REZENDE DA SILVA'
+            'AIRTON VINICIUS DOS SANTOS OLIVEIRA',
+    'ALESSANDRO OZITIO CAMPELO',
+    'ARLISON NESTOR DA CONCEIÇÃO',
+    'CARLOS ALBERTO DOS SANTOS',
+    'CIDARTA REGIS DE SOUZA',
+    'DANIEL PINTO PEDROSO',
+    'DARLEN WILSON FERREIRA SILVA',
+    'DINEY RODRIGUES DOS PASSOS',
+    'EDER JUNIOR PAPALEO DA SILVA',
+    'EDINEI DA SILVA FERREIRA',
+    'EDUARDO PINHEIRO RODRIGUES',
+    'HELIO BARBOSA COSTA',
+    'JACKSOM AMARAL DA SILVA',
+    'JARLISSON FABIO SANTOS DE SOUSA',
+    'JANILDO PORTILHO SANTOS FILHO',
+    'JOÃO BATISTA DA SILVA BEZERRA',
+    'JOELSON MONTEIRO PEREIRA',
+    'JOSIVAN MACIEL DOS REIS',
+    'JUAN FABRICIO RODRIGUES DE LIMA',
+    'JUNIPERO MANOEL DA SILVA LOPES',
+    'KLEBER JOSE DOS SANTOS PEREIRA',
+    'LEONARDO NANTES ALVES',
+    'MARCIO FERREIRA SABOIA',
+    'MARCOS ANDRE MENDES PEREIRA',
+    'MARIVALDO DE JESUS CORREA',
+    'MARLISSON FEITOSA BEZERRA',
+    'MATHEUS TRINDADE DE ALMEIDA',
+    'MICHAEL LUAN DOS SANTOS SILVA',
+    'NILTON MARCOS MOTA CAMPOS',
+    'PEDRO HUEB TAPXURE CURRY',
+    'RAFAEL REZENDE DA SILVA',
+    'RENILDO FERREIRA LAVAREDA',
+    'RIAN TEIXEIRA SIQUEIRA',
+    'ROMÁRIO LIMA RIKER'
         ];
 
         // Lista inicial de veículos
@@ -1069,17 +1110,6 @@
         let vehicles = [];
         let fuelRecords = [];
 
-        // Preços de combustíveis
-        let fuelPrices = {
-            'Diesel S10': 6.69,
-            'Diesel Comum': 6.10,
-            'Gasolina Comum': 6.43,
-            'Gasolina Aditivada': 7.18,
-            'Etanol': 4.39,
-            'GNV': 5.13,
-            lastUpdate: new Date().toISOString()
-        };
-
         // ==================== SISTEMA DE ARMAZENAMENTO ====================
 
         function autoSave() {
@@ -1088,12 +1118,9 @@
                     requests: requests,
                     vehicles: vehicles,
                     fuelRecords: fuelRecords,
-                    fuelPrices: fuelPrices,
-                    lastSave: new Date().toISOString(),
-                    version: 'v3.0.0'
+                    lastSave: new Date().toISOString()
                 };
                 localStorage.setItem('rezende-energia-database', JSON.stringify(data));
-                console.log('💾 Dados salvos com sucesso!');
                 return true;
             } catch (error) {
                 console.error('❌ Erro ao salvar dados:', error);
@@ -1106,23 +1133,14 @@
                 const saved = localStorage.getItem('rezende-energia-database');
                 if (saved) {
                     const data = JSON.parse(saved);
-                    
                     requests = data.requests || [];
                     vehicles = data.vehicles && data.vehicles.length > 0 ? data.vehicles : [...initialVehicles];
                     fuelRecords = data.fuelRecords || [];
-                    fuelPrices = data.fuelPrices || fuelPrices;
-
-                    console.log('📂 Dados carregados:', {
-                        requests: requests.length,
-                        vehicles: vehicles.length,
-                        fuelRecords: fuelRecords.length
-                    });
                 } else {
                     requests = [];
                     vehicles = [...initialVehicles];
                     fuelRecords = [];
                     autoSave();
-                    console.log('🆕 Novo banco de dados criado');
                 }
             } catch (error) {
                 console.error('❌ Erro ao carregar dados:', error);
@@ -1132,13 +1150,12 @@
             }
         }
 
-        // ==================== FUNÇÕES DE LOGIN SIMPLIFICADAS ====================
+        // ==================== FUNÇÕES DE LOGIN SEPARADAS ====================
 
-        function loginAsDriver() {
-            // Popular o select com os motoristas disponíveis
-            const driverSelect = document.getElementById('driver-name-select');
+        function showDriverLogin() {
+            const driverSelect = document.getElementById('driver-name');
             driverSelect.innerHTML = '<option value="">Selecione seu nome</option>';
-            
+
             availableDrivers.forEach(driver => {
                 const option = document.createElement('option');
                 option.value = driver;
@@ -1146,13 +1163,13 @@
                 driverSelect.appendChild(option);
             });
 
-            // Mostrar modal de seleção
-            document.getElementById('modal-driver-selection').classList.add('active');
+            document.getElementById('role-selection').style.display = 'none';
+            document.getElementById('driver-login').style.display = 'block';
         }
 
-        function confirmDriverSelection() {
-            const selectedDriver = document.getElementById('driver-name-select').value;
-            
+        function loginAsDriver() {
+            const selectedDriver = document.getElementById('driver-name').value;
+
             if (!selectedDriver) {
                 showNotification('Por favor, selecione seu nome!', 'error');
                 return;
@@ -1161,8 +1178,7 @@
             currentRole = 'motorista';
             currentDriverName = selectedDriver;
             isLoggedIn = true;
-            
-            closeModal('modal-driver-selection');
+
             showMainApp();
             showNotification(`Bem-vindo, ${selectedDriver.split(' ')[0]}!`, 'success');
         }
@@ -1170,11 +1186,6 @@
         function showSupervisorLogin() {
             document.getElementById('role-selection').style.display = 'none';
             document.getElementById('supervisor-login').style.display = 'block';
-        }
-
-        function backToRoleSelection() {
-            document.getElementById('role-selection').style.display = 'block';
-            document.getElementById('supervisor-login').style.display = 'none';
         }
 
         function loginAsSupervisor() {
@@ -1198,6 +1209,12 @@
             }
         }
 
+        function backToRoleSelection() {
+            document.getElementById('role-selection').style.display = 'block';
+            document.getElementById('driver-login').style.display = 'none';
+            document.getElementById('supervisor-login').style.display = 'none';
+        }
+
         function logout() {
             isLoggedIn = false;
             currentRole = '';
@@ -1207,8 +1224,9 @@
 
             document.getElementById('supervisor-username').value = '';
             document.getElementById('supervisor-password').value = '';
+            document.getElementById('driver-name').value = '';
             backToRoleSelection();
-            
+
             showNotification('Logout realizado com sucesso!', 'success');
         }
 
@@ -1220,11 +1238,9 @@
             updateCurrentDate();
             loadRecentActivities();
             loadAllRequests();
-            loadVehicles();
-            loadFuelRecords();
-            loadFuelPrices();
+            populateSelects();
             updateStats();
-            
+
             showNotification('Sistema carregado com sucesso!', 'success');
         }
 
@@ -1239,6 +1255,7 @@
             const actionExport = document.getElementById('action-export');
             const statsGrid = document.getElementById('stats-grid');
             const actionsHeader = document.getElementById('actions-header');
+            const requestsActionsHeader = document.getElementById('requests-actions-header');
 
             if (currentRole === 'supervisor') {
                 userRoleDisplay.textContent = `👨‍💼 Supervisor - ${currentDriverName}`;
@@ -1251,6 +1268,7 @@
                 if (actionExport) actionExport.style.display = 'block';
                 if (statsGrid) statsGrid.style.pointerEvents = 'auto';
                 if (actionsHeader) actionsHeader.style.display = 'table-cell';
+                if (requestsActionsHeader) requestsActionsHeader.style.display = 'table-cell';
             } else {
                 userRoleDisplay.textContent = `🚛 Motorista - ${currentDriverName}`;
                 if (navVehicles) navVehicles.classList.add('hidden');
@@ -1262,9 +1280,8 @@
                 if (actionExport) actionExport.style.display = 'none';
                 if (statsGrid) statsGrid.style.pointerEvents = 'none';
                 if (actionsHeader) actionsHeader.style.display = 'none';
+                if (requestsActionsHeader) requestsActionsHeader.style.display = 'none';
             }
-
-            populateSelects();
         }
 
         // ==================== FUNÇÃO DE CRIAR REQUISIÇÃO ====================
@@ -1310,26 +1327,9 @@
 
             requests.unshift(newRequest);
 
-            const newFuelRecord = {
-                requestId: newId,
-                driver: currentDriverName,
-                vehicle: `${vehicleModel} - ${plate}`,
-                gasStation: gasStation,
-                fuelType: fuelType,
-                estimatedValue: 'A definir',
-                realValue: null,
-                liters: null,
-                status: 'pending',
-                date: today,
-                notes: ''
-            };
-
-            fuelRecords.unshift(newFuelRecord);
-
             if (autoSave()) {
                 loadRecentActivities();
                 loadAllRequests();
-                loadFuelRecords();
                 updateStats();
 
                 closeModal('modal-new-request');
@@ -1382,16 +1382,8 @@
                 }
             });
 
-            if (screenId === 'reports') {
-                generateReport();
-            } else if (screenId === 'fuel-records') {
-                loadFuelRecords();
-            } else if (screenId === 'requests') {
+            if (screenId === 'requests') {
                 loadAllRequests();
-            } else if (screenId === 'vehicles') {
-                loadVehicles();
-            } else if (screenId === 'fuel-prices') {
-                loadFuelPrices();
             }
         }
 
@@ -1527,9 +1519,6 @@
                             <button class="btn btn-small btn-success" onclick="approveRequest('${req.id}')">✅</button>
                             <button class="btn btn-small btn-danger" onclick="rejectRequest('${req.id}')">❌</button>
                         ` : ''}
-                        ${currentRole === 'supervisor' && req.status === 'signed' ? `
-                            <button class="btn btn-small btn-warning" onclick="markAsFueled('${req.id}')">⛽</button>
-                        ` : ''}
                     </td>
                 </tr>
             `).join('');
@@ -1566,14 +1555,9 @@
                     <td>${req.km ? req.km.toLocaleString() + ' km' : 'N/A'}</td>
                     <td>
                         <button class="btn btn-small" onclick="viewRequest('${req.id}')">👁️</button>
-                        ${currentRole === 'supervisor' ? `
-                            ${req.status === 'pending' ? `
-                                <button class="btn btn-small btn-success" onclick="approveRequest('${req.id}')">✅</button>
-                                <button class="btn btn-small btn-danger" onclick="rejectRequest('${req.id}')">❌</button>
-                            ` : ''}
-                            ${req.status === 'signed' ? `
-                                <button class="btn btn-small btn-warning" onclick="markAsFueled('${req.id}')">⛽</button>
-                            ` : ''}
+                        ${currentRole === 'supervisor' && req.status === 'pending' ? `
+                            <button class="btn btn-small btn-success" onclick="approveRequest('${req.id}')">✅</button>
+                            <button class="btn btn-small btn-danger" onclick="rejectRequest('${req.id}')">❌</button>
                         ` : ''}
                     </td>
                 </tr>
@@ -1645,16 +1629,10 @@
                 request.status = 'signed';
                 request.supervisor = currentDriverName;
 
-                const fuelRecord = fuelRecords.find(record => record.requestId === reqId);
-                if (fuelRecord) {
-                    fuelRecord.status = 'pending';
-                }
-
                 autoSave();
 
                 loadRecentActivities();
                 loadAllRequests();
-                loadFuelRecords();
                 updateStats();
 
                 showNotification(`Requisição ${reqId} aprovada com sucesso!`, 'success');
@@ -1679,19 +1657,6 @@
                 updateStats();
 
                 showNotification(`Requisição ${reqId} rejeitada!`, 'warning');
-            }
-        }
-
-        function markAsFueled(reqId) {
-            if (currentRole !== 'supervisor') {
-                showNotification('Apenas supervisores podem marcar como abastecido!', 'error');
-                return;
-            }
-
-            const request = requests.find(req => req.id === reqId);
-            if (request && request.status === 'signed') {
-                showScreen('fuel-records');
-                showNotification(`Acesse o registro de abastecimento para finalizar a requisição ${reqId}`, 'warning');
             }
         }
 
@@ -1721,7 +1686,6 @@
 📅 Data: ${formatDate(request.date)}
 👨‍💼 Supervisor: ${request.supervisor}
 💰 Valor Estimado: ${request.estimatedValue || 'N/A'}
-${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
 🛣️ Quilometragem: ${request.km ? request.km.toLocaleString() + ' km' : 'N/A'}
 ⚡ Prioridade: ${priorityText[request.priority] || 'N/A'}
 📊 Status: ${getStatusText(request.status)}
@@ -1756,27 +1720,6 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
             }, 4000);
         }
 
-        // Funções básicas para outras telas (simplificadas)
-        function loadVehicles() {
-            console.log('Carregando veículos...');
-        }
-
-        function loadFuelRecords() {
-            console.log('Carregando registros de abastecimento...');
-        }
-
-        function loadFuelPrices() {
-            console.log('Carregando preços de combustível...');
-        }
-
-        function generateReport() {
-            console.log('Gerando relatório...');
-        }
-
-        function exportToExcel(type) {
-            showNotification('Funcionalidade de exportação em desenvolvimento!', 'warning');
-        }
-
         function filterByStatus(status) {
             if (currentRole === 'motorista') {
                 showNotification('Filtros disponíveis apenas para supervisores', 'warning');
@@ -1786,17 +1729,15 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
             showNotification(`Filtrando por status: ${getStatusText(status)}`, 'success');
         }
 
+        function exportToExcel(type) {
+            showNotification('Funcionalidade de exportação em desenvolvimento!', 'warning');
+        }
+
         // Inicialização do sistema
         document.addEventListener('DOMContentLoaded', function() {
             loadDataFromStorage();
 
-            setInterval(() => {
-                if (isLoggedIn) {
-                    autoSave();
-                }
-            }, 30000);
-
-            console.log('🚛 Sistema Rezende Energia v3.0.0 - Pronto para Login');
+            console.log('🚛 Sistema Rezende Energia - Pronto para Login');
 
             setTimeout(() => {
                 if (!isLoggedIn) {
