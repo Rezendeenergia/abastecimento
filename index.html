@@ -816,7 +816,6 @@
             <div class="nav-item hidden" id="nav-fuel-prices" onclick="showScreen('fuel-prices')">💰 Preços Combustíveis</div>
             <div class="nav-item hidden" id="nav-vehicles" onclick="showScreen('vehicles')">🚚 Veículos</div>
             <div class="nav-item hidden" id="nav-reports" onclick="showScreen('reports')">📈 Relatórios</div>
-            <div class="nav-item hidden" id="nav-settings" onclick="showScreen('settings')">⚙️ Configurações</div>
         </div>
 
         <!-- Main Content -->
@@ -929,9 +928,10 @@
                         <div class="card-title">📋 Todas as Requisições</div>
                         <div style="display: flex; gap: 10px;">
                             <button class="btn" onclick="newRequest()">Nova Requisição</button>
+                            <button class="btn btn-secondary" onclick="exportToExcel('requests')" id="export-requests-btn" style="display: none;">Exportar Excel</button>
                         </div>
                     </div>
-
+                    
                     <div class="table-container">
                         <table>
                             <thead>
@@ -957,6 +957,170 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Fuel Records Screen -->
+            <div id="fuel-records" class="screen">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">⛽ Registro de Abastecimento</div>
+                        <button class="btn btn-secondary" onclick="exportToExcel('fuel-records')">Exportar Excel</button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID Requisição</th>
+                                    <th>Motorista</th>
+                                    <th>Veículo</th>
+                                    <th>Posto</th>
+                                    <th>Combustível</th>
+                                    <th>Valor Est.</th>
+                                    <th>Valor Real</th>
+                                    <th>Litros</th>
+                                    <th>Status</th>
+                                    <th>Data</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fuel-records-table">
+                                <!-- Preenchido via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fuel Prices Screen -->
+            <div id="fuel-prices" class="screen">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">💰 Preços de Combustíveis</div>
+                        <button class="btn" onclick="showUpdatePricesModal()">Atualizar Preços</button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Combustível</th>
+                                    <th>Preço (R$/L)</th>
+                                    <th>Última Atualização</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fuel-prices-table">
+                                <!-- Preenchido via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vehicles Screen -->
+            <div id="vehicles" class="screen">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🚚 Frota de Veículos</div>
+                        <button class="btn btn-secondary" onclick="exportToExcel('vehicles')">Exportar Excel</button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Placa</th>
+                                    <th>Modelo</th>
+                                    <th>Ano</th>
+                                    <th>Status</th>
+                                    <th>Cor</th>
+                                    <th>KM</th>
+                                    <th>Último Abastecimento</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vehicles-table">
+                                <!-- Preenchido via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Screen -->
+            <div id="reports" class="screen">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">📈 Relatórios e Estatísticas</div>
+                        <button class="btn" onclick="generateReport()">Gerar Relatório</button>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Período Inicial:</label>
+                            <input type="date" id="report-start-date">
+                        </div>
+                        <div class="form-group">
+                            <label>Período Final:</label>
+                            <input type="date" id="report-end-date">
+                        </div>
+                        <div class="form-group">
+                            <label>Filtrar por Motorista:</label>
+                            <select id="report-driver">
+                                <option value="">Todos os motoristas</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Filtrar por Status:</label>
+                            <select id="report-status">
+                                <option value="">Todos os status</option>
+                                <option value="pending">Pendentes</option>
+                                <option value="signed">Aprovadas</option>
+                                <option value="fueled">Abastecidas</option>
+                                <option value="completed">Completas</option>
+                                <option value="rejected">Rejeitadas</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card pending">
+                            <div class="stat-number" id="report-total">0</div>
+                            <div class="stat-label">Total de Requisições</div>
+                        </div>
+                        <div class="stat-card signed">
+                            <div class="stat-number" id="report-approved">0</div>
+                            <div class="stat-label">Aprovadas</div>
+                        </div>
+                        <div class="stat-card fueled">
+                            <div class="stat-number" id="report-fueled">0</div>
+                            <div class="stat-label">Abastecidas</div>
+                        </div>
+                        <div class="stat-card completed">
+                            <div class="stat-number" id="report-completed">0</div>
+                            <div class="stat-label">Completas</div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Motorista</th>
+                                    <th>Veículo</th>
+                                    <th>Cidade</th>
+                                    <th>Combustível</th>
+                                    <th>Status</th>
+                                    <th>Data</th>
+                                    <th>Valor Est.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reports-table">
+                                <!-- Preenchido via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -965,7 +1129,7 @@
         <div class="modal-content">
             <span class="modal-close" onclick="closeModal('modal-new-request')">&times;</span>
             <h3 style="margin-bottom: 20px;">📋 Nova Requisição de Abastecimento</h3>
-
+            
             <div class="form-grid">
                 <div class="form-group">
                     <label>Motorista: <span style="color: red;">*</span></label>
@@ -1019,12 +1183,12 @@
                     </select>
                 </div>
             </div>
-
+            
             <div class="form-group">
                 <label>Observações:</label>
                 <textarea id="new-request-notes" rows="3" placeholder="Observações adicionais..."></textarea>
             </div>
-
+            
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button class="btn" onclick="createRequest()" style="flex: 1;">Criar Requisição</button>
                 <button class="btn btn-secondary" onclick="closeModal('modal-new-request')" style="flex: 1;">Cancelar</button>
@@ -1032,9 +1196,27 @@
         </div>
     </div>
 
+    <!-- Modal Atualizar Preços -->
+    <div id="modal-update-prices" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('modal-update-prices')">&times;</span>
+            <h3 style="margin-bottom: 20px;">💰 Atualizar Preços de Combustíveis</h3>
+            
+            <div class="form-grid" id="fuel-prices-form">
+                <!-- Preenchido via JavaScript -->
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn" onclick="updateFuelPrices()" style="flex: 1;">Atualizar Preços</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-update-prices')" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Notificação -->
     <div id="notification" class="notification"></div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         // Estado global da aplicação
         let currentRole = '';
@@ -1063,40 +1245,24 @@
 
         // Lista de motoristas disponíveis
         const availableDrivers = [
-            'AIRTON VINICIUS DOS SANTOS OLIVEIRA',
-    'ALESSANDRO OZITIO CAMPELO',
-    'ARLISON NESTOR DA CONCEIÇÃO',
-    'CARLOS ALBERTO DOS SANTOS',
-    'CIDARTA REGIS DE SOUZA',
-    'DANIEL PINTO PEDROSO',
-    'DARLEN WILSON FERREIRA SILVA',
-    'DINEY RODRIGUES DOS PASSOS',
-    'EDER JUNIOR PAPALEO DA SILVA',
-    'EDINEI DA SILVA FERREIRA',
-    'EDUARDO PINHEIRO RODRIGUES',
-    'HELIO BARBOSA COSTA',
-    'JACKSOM AMARAL DA SILVA',
-    'JARLISSON FABIO SANTOS DE SOUSA',
-    'JANILDO PORTILHO SANTOS FILHO',
-    'JOÃO BATISTA DA SILVA BEZERRA',
-    'JOELSON MONTEIRO PEREIRA',
-    'JOSIVAN MACIEL DOS REIS',
-    'JUAN FABRICIO RODRIGUES DE LIMA',
-    'JUNIPERO MANOEL DA SILVA LOPES',
-    'KLEBER JOSE DOS SANTOS PEREIRA',
-    'LEONARDO NANTES ALVES',
-    'MARCIO FERREIRA SABOIA',
-    'MARCOS ANDRE MENDES PEREIRA',
-    'MARIVALDO DE JESUS CORREA',
-    'MARLISSON FEITOSA BEZERRA',
-    'MATHEUS TRINDADE DE ALMEIDA',
-    'MICHAEL LUAN DOS SANTOS SILVA',
-    'NILTON MARCOS MOTA CAMPOS',
-    'PEDRO HUEB TAPXURE CURRY',
-    'RAFAEL REZENDE DA SILVA',
-    'RENILDO FERREIRA LAVAREDA',
-    'RIAN TEIXEIRA SIQUEIRA',
-    'ROMÁRIO LIMA RIKER'
+            'ABRAÃO TRINDADE ALBUQUERQUE', 'AIRTON VINICIUS DOS SANTOS OLIVEIRA',
+            'ALAN DENNER PINTO DE SOUZA', 'ALESSANDRO OZITIO CAMPELO',
+            'ARLISON NESTOR DA CONCEIÇÃO', 'CARLOS ALBERTO DOS SANTOS',
+            'CIDARTA REGIS DE SOUZA', 'DANIEL PINTO PEDROSO',
+            'DARLEN WILSON FERREIRA SILVA', 'DINEY RODRIGUES DOS PASSOS',
+            'EDER JUNIOR PAPALEO DA SILVA', 'EDINEI DA SILVA FERREIRA',
+            'EDUARDO PINHEIRO RODRIGUES', 'HELIO BARBOSA COSTA',
+            'JACKSOM AMARAL DA SILVA', 'JANILDO PORTILHO SANTOS FILHO',
+            'JOÃO BATISTA DA SILVA BEZERRA', 'JOELSON MONTEIRO PEREIRA',
+            'JOSIVAN MACIEL DOS REIS', 'JUAN FABRICIO RODRIGUES DE LIMA',
+            'JUNIPERO MANOEL DA SILVA LOPES', 'KLEBER JOSE DOS SANTOS PEREIRA',
+            'MARCIO FERREIRA SABOIA', 'MARCOS ANDRE MENDES PEREIRA',
+            'MARIVALDO DE JESUS CORREA', 'MARLISSON FEITOSA BEZERRA',
+            'MATHEUS TRINDADE DE ALMEIDA', 'MICHAEL LUAN DOS SANTOS SILVA',
+            'NILTON MARCOS MOTA CAMPOS', 'RENILDO FERREIRA LAVAREDA',
+            'RIAN TEIXEIRA SIQUEIRA', 'ROMÁRIO LIMA RIKER',
+            'LEONARDO NANTES ALVES', 'JARLISSON FABIO SANTOS DE SOUSA',
+            'PEDRO HUEB TAPXURE CURRY', 'RAFAEL REZENDE DA SILVA'
         ];
 
         // Lista inicial de veículos
@@ -1104,6 +1270,17 @@
             { plate: 'BCQ0937', model: 'F4000', year: '2023', status: 'Ativo', color: 'Branca', km: 0, lastFuel: 'Nunca' },
             { plate: 'JJB4E57', model: 'CARGO 1217', year: '2002', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
         ];
+
+        // Preços de combustíveis
+        let fuelPrices = {
+            'Diesel S10': 6.69,
+            'Diesel Comum': 6.10,
+            'Gasolina Comum': 6.43,
+            'Gasolina Aditivada': 7.18,
+            'Etanol': 4.39,
+            'GNV': 5.13,
+            lastUpdate: new Date().toISOString()
+        };
 
         // Dados do sistema
         let requests = [];
@@ -1118,6 +1295,7 @@
                     requests: requests,
                     vehicles: vehicles,
                     fuelRecords: fuelRecords,
+                    fuelPrices: fuelPrices,
                     lastSave: new Date().toISOString()
                 };
                 localStorage.setItem('rezende-energia-database', JSON.stringify(data));
@@ -1136,6 +1314,7 @@
                     requests = data.requests || [];
                     vehicles = data.vehicles && data.vehicles.length > 0 ? data.vehicles : [...initialVehicles];
                     fuelRecords = data.fuelRecords || [];
+                    fuelPrices = data.fuelPrices || fuelPrices;
                 } else {
                     requests = [];
                     vehicles = [...initialVehicles];
@@ -1155,7 +1334,7 @@
         function showDriverLogin() {
             const driverSelect = document.getElementById('driver-name');
             driverSelect.innerHTML = '<option value="">Selecione seu nome</option>';
-
+            
             availableDrivers.forEach(driver => {
                 const option = document.createElement('option');
                 option.value = driver;
@@ -1169,7 +1348,7 @@
 
         function loginAsDriver() {
             const selectedDriver = document.getElementById('driver-name').value;
-
+            
             if (!selectedDriver) {
                 showNotification('Por favor, selecione seu nome!', 'error');
                 return;
@@ -1178,7 +1357,7 @@
             currentRole = 'motorista';
             currentDriverName = selectedDriver;
             isLoggedIn = true;
-
+            
             showMainApp();
             showNotification(`Bem-vindo, ${selectedDriver.split(' ')[0]}!`, 'success');
         }
@@ -1226,7 +1405,7 @@
             document.getElementById('supervisor-password').value = '';
             document.getElementById('driver-name').value = '';
             backToRoleSelection();
-
+            
             showNotification('Logout realizado com sucesso!', 'success');
         }
 
@@ -1240,7 +1419,7 @@
             loadAllRequests();
             populateSelects();
             updateStats();
-
+            
             showNotification('Sistema carregado com sucesso!', 'success');
         }
 
@@ -1248,11 +1427,11 @@
             const userRoleDisplay = document.getElementById('user-role-display');
             const navVehicles = document.getElementById('nav-vehicles');
             const navReports = document.getElementById('nav-reports');
-            const navSettings = document.getElementById('nav-settings');
             const navFuelRecords = document.getElementById('nav-fuel-records');
             const navFuelPrices = document.getElementById('nav-fuel-prices');
             const actionReports = document.getElementById('action-reports');
             const actionExport = document.getElementById('action-export');
+            const exportRequestsBtn = document.getElementById('export-requests-btn');
             const statsGrid = document.getElementById('stats-grid');
             const actionsHeader = document.getElementById('actions-header');
             const requestsActionsHeader = document.getElementById('requests-actions-header');
@@ -1261,11 +1440,11 @@
                 userRoleDisplay.textContent = `👨‍💼 Supervisor - ${currentDriverName}`;
                 if (navVehicles) navVehicles.classList.remove('hidden');
                 if (navReports) navReports.classList.remove('hidden');
-                if (navSettings) navSettings.classList.remove('hidden');
                 if (navFuelRecords) navFuelRecords.classList.remove('hidden');
                 if (navFuelPrices) navFuelPrices.classList.remove('hidden');
                 if (actionReports) actionReports.style.display = 'block';
                 if (actionExport) actionExport.style.display = 'block';
+                if (exportRequestsBtn) exportRequestsBtn.style.display = 'block';
                 if (statsGrid) statsGrid.style.pointerEvents = 'auto';
                 if (actionsHeader) actionsHeader.style.display = 'table-cell';
                 if (requestsActionsHeader) requestsActionsHeader.style.display = 'table-cell';
@@ -1273,14 +1452,297 @@
                 userRoleDisplay.textContent = `🚛 Motorista - ${currentDriverName}`;
                 if (navVehicles) navVehicles.classList.add('hidden');
                 if (navReports) navReports.classList.add('hidden');
-                if (navSettings) navSettings.classList.add('hidden');
                 if (navFuelRecords) navFuelRecords.classList.add('hidden');
                 if (navFuelPrices) navFuelPrices.classList.add('hidden');
                 if (actionReports) actionReports.style.display = 'none';
                 if (actionExport) actionExport.style.display = 'none';
+                if (exportRequestsBtn) exportRequestsBtn.style.display = 'none';
                 if (statsGrid) statsGrid.style.pointerEvents = 'none';
                 if (actionsHeader) actionsHeader.style.display = 'none';
                 if (requestsActionsHeader) requestsActionsHeader.style.display = 'none';
+            }
+        }
+
+        // ==================== FUNÇÕES DAS TELAS DO SUPERVISOR ====================
+
+        function loadFuelRecords() {
+            const tbody = document.getElementById('fuel-records-table');
+            if (!tbody) return;
+
+            if (fuelRecords.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: #64748b; padding: 40px;">Nenhum registro de abastecimento encontrado</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = fuelRecords.map(record => `
+                <tr>
+                    <td><strong>${record.requestId}</strong></td>
+                    <td>${record.driver}</td>
+                    <td>${record.vehicle}</td>
+                    <td>${record.gasStation}</td>
+                    <td>${record.fuelType}</td>
+                    <td>${record.estimatedValue}</td>
+                    <td>${record.realValue || 'N/A'}</td>
+                    <td>${record.liters || 'N/A'}</td>
+                    <td><span class="status-badge status-${record.status}">${getStatusText(record.status)}</span></td>
+                    <td>${formatDate(record.date)}</td>
+                    <td>
+                        <button class="btn btn-small" onclick="viewFuelRecord('${record.requestId}')">👁️</button>
+                        ${record.status === 'pending' ? `
+                            <button class="btn btn-small btn-success" onclick="completeFuelRecord('${record.requestId}')">✅</button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function loadFuelPrices() {
+            const tbody = document.getElementById('fuel-prices-table');
+            if (!tbody) return;
+
+            tbody.innerHTML = Object.entries(fuelPrices)
+                .filter(([key]) => key !== 'lastUpdate')
+                .map(([fuel, price]) => `
+                <tr>
+                    <td><strong>${fuel}</strong></td>
+                    <td>R$ ${price.toFixed(2)}</td>
+                    <td>${formatDate(fuelPrices.lastUpdate)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function loadVehicles() {
+            const tbody = document.getElementById('vehicles-table');
+            if (!tbody) return;
+
+            tbody.innerHTML = vehicles.map(vehicle => `
+                <tr>
+                    <td><strong>${vehicle.plate}</strong></td>
+                    <td>${vehicle.model}</td>
+                    <td>${vehicle.year}</td>
+                    <td><span class="status-badge ${vehicle.status === 'Ativo' ? 'status-signed' : 'status-rejected'}">${vehicle.status}</span></td>
+                    <td>${vehicle.color}</td>
+                    <td>${vehicle.km.toLocaleString()} km</td>
+                    <td>${vehicle.lastFuel}</td>
+                </tr>
+            `).join('');
+        }
+
+        function showUpdatePricesModal() {
+            const form = document.getElementById('fuel-prices-form');
+            form.innerHTML = Object.entries(fuelPrices)
+                .filter(([key]) => key !== 'lastUpdate')
+                .map(([fuel, price]) => `
+                <div class="form-group">
+                    <label>${fuel}:</label>
+                    <input type="number" step="0.01" id="price-${fuel.replace(/\s+/g, '-')}" value="${price}" placeholder="Preço por litro">
+                </div>
+            `).join('');
+
+            document.getElementById('modal-update-prices').classList.add('active');
+        }
+
+        function updateFuelPrices() {
+            Object.keys(fuelPrices)
+                .filter(key => key !== 'lastUpdate')
+                .forEach(fuel => {
+                    const input = document.getElementById(`price-${fuel.replace(/\s+/g, '-')}`);
+                    if (input && input.value) {
+                        fuelPrices[fuel] = parseFloat(input.value);
+                    }
+                });
+
+            fuelPrices.lastUpdate = new Date().toISOString();
+            autoSave();
+            loadFuelPrices();
+            closeModal('modal-update-prices');
+            showNotification('Preços atualizados com sucesso!', 'success');
+        }
+
+        function generateReport() {
+            const startDate = document.getElementById('report-start-date').value;
+            const endDate = document.getElementById('report-end-date').value;
+            const driver = document.getElementById('report-driver').value;
+            const status = document.getElementById('report-status').value;
+
+            let filteredRequests = [...requests];
+
+            // Filtrar por data
+            if (startDate) {
+                filteredRequests = filteredRequests.filter(req => req.date >= startDate);
+            }
+            if (endDate) {
+                filteredRequests = filteredRequests.filter(req => req.date <= endDate);
+            }
+
+            // Filtrar por motorista
+            if (driver) {
+                filteredRequests = filteredRequests.filter(req => req.driver === driver);
+            }
+
+            // Filtrar por status
+            if (status) {
+                filteredRequests = filteredRequests.filter(req => req.status === status);
+            }
+
+            // Atualizar estatísticas do relatório
+            document.getElementById('report-total').textContent = filteredRequests.length;
+            document.getElementById('report-approved').textContent = filteredRequests.filter(req => req.status === 'signed').length;
+            document.getElementById('report-fueled').textContent = filteredRequests.filter(req => req.status === 'fueled').length;
+            document.getElementById('report-completed').textContent = filteredRequests.filter(req => req.status === 'completed').length;
+
+            // Atualizar tabela
+            const tbody = document.getElementById('reports-table');
+            if (filteredRequests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #64748b; padding: 40px;">Nenhuma requisição encontrada</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filteredRequests.map(req => `
+                <tr>
+                    <td><strong>${req.id}</strong></td>
+                    <td>${req.driver}</td>
+                    <td>${req.vehicle}</td>
+                    <td>${req.city || 'N/A'}</td>
+                    <td>${req.fuelType || 'N/A'}</td>
+                    <td><span class="status-badge status-${req.status}">${getStatusText(req.status)}</span></td>
+                    <td>${formatDate(req.date)}</td>
+                    <td>${req.estimatedValue || 'N/A'}</td>
+                </tr>
+            `).join('');
+
+            showNotification('Relatório gerado com sucesso!', 'success');
+        }
+
+        // ==================== EXPORTAÇÃO PARA EXCEL ====================
+
+        function exportToExcel(type) {
+            try {
+                let data = [];
+                let fileName = '';
+
+                switch(type) {
+                    case 'requests':
+                        data = requests.map(req => ({
+                            'ID': req.id,
+                            'Motorista': req.driver,
+                            'Veículo': req.vehicle,
+                            'Cidade': req.city,
+                            'Posto': req.gasStation,
+                            'Combustível': req.fuelType,
+                            'Status': getStatusText(req.status),
+                            'Data': formatDate(req.date),
+                            'Supervisor': req.supervisor,
+                            'Valor Estimado': req.estimatedValue,
+                            'KM': req.km,
+                            'Prioridade': req.priority,
+                            'Observações': req.notes
+                        }));
+                        fileName = 'requisicoes_abastecimento.xlsx';
+                        break;
+
+                    case 'fuel-records':
+                        data = fuelRecords.map(record => ({
+                            'ID Requisição': record.requestId,
+                            'Motorista': record.driver,
+                            'Veículo': record.vehicle,
+                            'Posto': record.gasStation,
+                            'Combustível': record.fuelType,
+                            'Valor Estimado': record.estimatedValue,
+                            'Valor Real': record.realValue || 'N/A',
+                            'Litros': record.liters || 'N/A',
+                            'Status': getStatusText(record.status),
+                            'Data': formatDate(record.date),
+                            'Observações': record.notes
+                        }));
+                        fileName = 'registros_abastecimento.xlsx';
+                        break;
+
+                    case 'vehicles':
+                        data = vehicles.map(vehicle => ({
+                            'Placa': vehicle.plate,
+                            'Modelo': vehicle.model,
+                            'Ano': vehicle.year,
+                            'Status': vehicle.status,
+                            'Cor': vehicle.color,
+                            'KM': vehicle.km,
+                            'Último Abastecimento': vehicle.lastFuel
+                        }));
+                        fileName = 'frota_veiculos.xlsx';
+                        break;
+
+                    case 'all':
+                        // Criar workbook com múltiplas abas
+                        const wb = XLSX.utils.book_new();
+                        
+                        // Aba de requisições
+                        const requestsData = requests.map(req => ({
+                            'ID': req.id,
+                            'Motorista': req.driver,
+                            'Veículo': req.vehicle,
+                            'Cidade': req.city,
+                            'Posto': req.gasStation,
+                            'Combustível': req.fuelType,
+                            'Status': getStatusText(req.status),
+                            'Data': formatDate(req.date),
+                            'Supervisor': req.supervisor,
+                            'Valor Estimado': req.estimatedValue,
+                            'KM': req.km,
+                            'Prioridade': req.priority,
+                            'Observações': req.notes
+                        }));
+                        const ws1 = XLSX.utils.json_to_sheet(requestsData);
+                        XLSX.utils.book_append_sheet(wb, ws1, 'Requisições');
+
+                        // Aba de registros
+                        const recordsData = fuelRecords.map(record => ({
+                            'ID Requisição': record.requestId,
+                            'Motorista': record.driver,
+                            'Veículo': record.vehicle,
+                            'Posto': record.gasStation,
+                            'Combustível': record.fuelType,
+                            'Valor Estimado': record.estimatedValue,
+                            'Valor Real': record.realValue || 'N/A',
+                            'Litros': record.liters || 'N/A',
+                            'Status': getStatusText(record.status),
+                            'Data': formatDate(record.date)
+                        }));
+                        const ws2 = XLSX.utils.json_to_sheet(recordsData);
+                        XLSX.utils.book_append_sheet(wb, ws2, 'Registros Abastecimento');
+
+                        // Aba de veículos
+                        const vehiclesData = vehicles.map(vehicle => ({
+                            'Placa': vehicle.plate,
+                            'Modelo': vehicle.model,
+                            'Ano': vehicle.year,
+                            'Status': vehicle.status,
+                            'Cor': vehicle.color,
+                            'KM': vehicle.km,
+                            'Último Abastecimento': vehicle.lastFuel
+                        }));
+                        const ws3 = XLSX.utils.json_to_sheet(vehiclesData);
+                        XLSX.utils.book_append_sheet(wb, ws3, 'Veículos');
+
+                        XLSX.writeFile(wb, 'sistema_abastecimento_completo.xlsx');
+                        showNotification('Exportação completa realizada com sucesso!', 'success');
+                        return;
+
+                    default:
+                        showNotification('Tipo de exportação não reconhecido!', 'error');
+                        return;
+                }
+
+                if (type !== 'all') {
+                    const ws = XLSX.utils.json_to_sheet(data);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Dados');
+                    XLSX.writeFile(wb, fileName);
+                    showNotification(`Exportação para ${fileName} realizada com sucesso!`, 'success');
+                }
+
+            } catch (error) {
+                console.error('Erro na exportação:', error);
+                showNotification('Erro ao exportar dados para Excel!', 'error');
             }
         }
 
@@ -1327,6 +1789,23 @@
 
             requests.unshift(newRequest);
 
+            // Criar registro de abastecimento associado
+            const newFuelRecord = {
+                requestId: newId,
+                driver: currentDriverName,
+                vehicle: `${vehicleModel} - ${plate}`,
+                gasStation: gasStation,
+                fuelType: fuelType,
+                estimatedValue: 'A definir',
+                realValue: null,
+                liters: null,
+                status: 'pending',
+                date: today,
+                notes: notes || ''
+            };
+
+            fuelRecords.unshift(newFuelRecord);
+
             if (autoSave()) {
                 loadRecentActivities();
                 loadAllRequests();
@@ -1358,7 +1837,7 @@
         }
 
         function showScreen(screenId) {
-            if (currentRole === 'motorista' && ['vehicles', 'reports', 'settings', 'fuel-records', 'fuel-prices'].includes(screenId)) {
+            if (currentRole === 'motorista' && ['vehicles', 'reports', 'fuel-records', 'fuel-prices'].includes(screenId)) {
                 showNotification('Acesso negado! Esta funcionalidade é apenas para supervisores.', 'error');
                 return;
             }
@@ -1382,9 +1861,38 @@
                 }
             });
 
-            if (screenId === 'requests') {
-                loadAllRequests();
+            // Carregar dados específicos da tela
+            switch(screenId) {
+                case 'requests':
+                    loadAllRequests();
+                    break;
+                case 'fuel-records':
+                    loadFuelRecords();
+                    break;
+                case 'fuel-prices':
+                    loadFuelPrices();
+                    break;
+                case 'vehicles':
+                    loadVehicles();
+                    break;
+                case 'reports':
+                    loadReportFilters();
+                    generateReport();
+                    break;
             }
+        }
+
+        function loadReportFilters() {
+            const driverSelect = document.getElementById('report-driver');
+            driverSelect.innerHTML = '<option value="">Todos os motoristas</option>';
+            
+            const uniqueDrivers = [...new Set(requests.map(req => req.driver))];
+            uniqueDrivers.forEach(driver => {
+                const option = document.createElement('option');
+                option.value = driver;
+                option.textContent = driver;
+                driverSelect.appendChild(option);
+            });
         }
 
         function getScreenName(screenId) {
@@ -1394,8 +1902,7 @@
                 'fuel-records': '⛽',
                 'fuel-prices': '💰',
                 'vehicles': '🚚',
-                'reports': '📈',
-                'settings': '⚙️'
+                'reports': '📈'
             };
             return screenNames[screenId] || '';
         }
@@ -1629,10 +2136,16 @@
                 request.status = 'signed';
                 request.supervisor = currentDriverName;
 
+                const fuelRecord = fuelRecords.find(record => record.requestId === reqId);
+                if (fuelRecord) {
+                    fuelRecord.status = 'signed';
+                }
+
                 autoSave();
 
                 loadRecentActivities();
                 loadAllRequests();
+                loadFuelRecords();
                 updateStats();
 
                 showNotification(`Requisição ${reqId} aprovada com sucesso!`, 'success');
@@ -1650,13 +2163,45 @@
                 request.status = 'rejected';
                 request.supervisor = currentDriverName;
 
+                const fuelRecord = fuelRecords.find(record => record.requestId === reqId);
+                if (fuelRecord) {
+                    fuelRecord.status = 'rejected';
+                }
+
                 autoSave();
 
                 loadRecentActivities();
                 loadAllRequests();
+                loadFuelRecords();
                 updateStats();
 
                 showNotification(`Requisição ${reqId} rejeitada!`, 'warning');
+            }
+        }
+
+        function completeFuelRecord(reqId) {
+            const fuelRecord = fuelRecords.find(record => record.requestId === reqId);
+            if (fuelRecord && fuelRecord.status === 'signed') {
+                const realValue = prompt('Digite o valor real do abastecimento:');
+                const liters = prompt('Digite a quantidade de litros abastecida:');
+                
+                if (realValue && liters) {
+                    fuelRecord.realValue = `R$ ${parseFloat(realValue).toFixed(2)}`;
+                    fuelRecord.liters = `${parseFloat(liters).toFixed(2)} L`;
+                    fuelRecord.status = 'completed';
+
+                    const request = requests.find(req => req.id === reqId);
+                    if (request) {
+                        request.status = 'completed';
+                        request.realValue = fuelRecord.realValue;
+                    }
+
+                    autoSave();
+                    loadFuelRecords();
+                    loadAllRequests();
+                    updateStats();
+                    showNotification(`Abastecimento ${reqId} registrado com sucesso!`, 'success');
+                }
             }
         }
 
@@ -1686,10 +2231,31 @@
 📅 Data: ${formatDate(request.date)}
 👨‍💼 Supervisor: ${request.supervisor}
 💰 Valor Estimado: ${request.estimatedValue || 'N/A'}
+${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
 🛣️ Quilometragem: ${request.km ? request.km.toLocaleString() + ' km' : 'N/A'}
 ⚡ Prioridade: ${priorityText[request.priority] || 'N/A'}
 📊 Status: ${getStatusText(request.status)}
 📝 Observações: ${request.notes}
+                `);
+            }
+        }
+
+        function viewFuelRecord(reqId) {
+            const record = fuelRecords.find(record => record.requestId === reqId);
+            if (record) {
+                alert(`
+⛽ REGISTRO DE ABASTECIMENTO ${reqId}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 Motorista: ${record.driver}
+🚚 Veículo: ${record.vehicle}
+⛽ Posto: ${record.gasStation}
+🛢️ Combustível: ${record.fuelType}
+💰 Valor Estimado: ${record.estimatedValue}
+${record.realValue ? `💰 Valor Real: ${record.realValue}` : ''}
+${record.liters ? `⛽ Litros: ${record.liters}` : ''}
+📊 Status: ${getStatusText(record.status)}
+📅 Data: ${formatDate(record.date)}
+${record.notes ? `📝 Observações: ${record.notes}` : ''}
                 `);
             }
         }
@@ -1727,10 +2293,6 @@
             }
             showScreen('requests');
             showNotification(`Filtrando por status: ${getStatusText(status)}`, 'success');
-        }
-
-        function exportToExcel(type) {
-            showNotification('Funcionalidade de exportação em desenvolvimento!', 'warning');
         }
 
         // Inicialização do sistema
