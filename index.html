@@ -1498,7 +1498,7 @@
                 };
                 localStorage.setItem('rezende-energia-database', JSON.stringify(data));
                 console.log('💾 Dados salvos com sucesso!');
-                
+
                 // Atualizar informações do sistema
                 updateSystemInfo();
                 return true;
@@ -1513,7 +1513,7 @@
                 const saved = localStorage.getItem('rezende-energia-database');
                 if (saved) {
                     const data = JSON.parse(saved);
-                    
+
                     // ✅ CORREÇÃO: Garantir que os arrays sempre existam
                     requests = data.requests || [];
                     vehicles = data.vehicles && data.vehicles.length > 0 ? data.vehicles : [...initialVehicles];
@@ -1620,7 +1620,7 @@
             document.getElementById('supervisor-username').value = '';
             document.getElementById('supervisor-password').value = '';
             backToRoleSelection();
-            
+
             showNotification('Logout realizado com sucesso!', 'success');
         }
 
@@ -1638,7 +1638,7 @@
             generateReport();
             updateStats();
             updateSystemInfo();
-            
+
             showNotification('Sistema carregado com sucesso!', 'success');
         }
 
