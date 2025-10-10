@@ -150,7 +150,8 @@
             color: #374151;
         }
 
-        .form-group input {
+        .form-group input,
+        .form-group select {
             padding: 12px;
             border: 2px solid #e2e8f0;
             border-radius: 8px;
@@ -158,7 +159,8 @@
             transition: all 0.3s ease;
         }
 
-        .form-group input:focus {
+        .form-group input:focus,
+        .form-group select:focus {
             outline: none;
             border-color: #F7931E;
             box-shadow: 0 0 0 3px rgba(247, 147, 30, 0.1);
@@ -443,15 +445,18 @@
         .form-group input,
         .form-group select,
         .form-group textarea {
+            width: 100%;
+        }
+
+        .form-group textarea {
             padding: 12px;
             border: 2px solid #e2e8f0;
             border-radius: 8px;
             font-size: 14px;
             transition: all 0.3s ease;
+            font-family: inherit;
         }
 
-        .form-group input:focus,
-        .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
             border-color: #F7931E;
@@ -760,9 +765,32 @@
                 margin: 10px 0;
             }
         }
+
+        /* Loading Indicator */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 2001;
+        }
+
+        .loading.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
+    <!-- Loading Indicator -->
+    <div id="loading" class="loading">
+        <p>🔄 Carregando banco de dados...</p>
+    </div>
+
     <!-- Login Screen -->
     <div id="login-screen" class="login-screen">
         <div class="login-card">
@@ -771,8 +799,19 @@
             <p class="login-subtitle">Sistema de Gestão de Abastecimento</p>
 
             <div class="role-buttons" id="role-selection">
-                <button class="role-btn" onclick="loginAsDriver()">🚛 Entrar como Motorista</button>
+                <button class="role-btn" onclick="showDriverLogin()">🚛 Entrar como Motorista</button>
                 <button class="role-btn supervisor" onclick="showSupervisorLogin()">👨‍💼 Entrar como Supervisor</button>
+            </div>
+
+            <div class="supervisor-login" id="driver-login">
+                <div class="form-group">
+                    <label>Seu Nome Completo:</label>
+                    <select id="driver-name">
+                        <option value="">Selecione seu nome</option>
+                    </select>
+                </div>
+                <button class="role-btn" onclick="loginAsDriver()">Entrar</button>
+                <button class="role-btn" style="margin-top: 10px; background: #64748b;" onclick="backToRoleSelection()">Voltar</button>
             </div>
 
             <div class="supervisor-login" id="supervisor-login">
@@ -1059,27 +1098,27 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Diesel S10 (R$/L):</label>
-                            <input type="number" id="price-diesel-s10" placeholder="6.49" step="0.01" value="6.49">
+                            <input type="number" id="price-diesel-s10" placeholder="6.49" step="0.01" value="6.69">
                         </div>
                         <div class="form-group">
                             <label>Diesel Comum (R$/L):</label>
-                            <input type="number" id="price-diesel-comum" placeholder="6.29" step="0.01" value="6.29">
+                            <input type="number" id="price-diesel-comum" placeholder="6.29" step="0.01" value="6.10">
                         </div>
                         <div class="form-group">
                             <label>Gasolina Comum (R$/L):</label>
-                            <input type="number" id="price-gasolina-comum" placeholder="5.89" step="0.01" value="5.89">
+                            <input type="number" id="price-gasolina-comum" placeholder="5.89" step="0.01" value="6.43">
                         </div>
                         <div class="form-group">
                             <label>Gasolina Aditivada (R$/L):</label>
-                            <input type="number" id="price-gasolina-aditivada" placeholder="6.19" step="0.01" value="6.19">
+                            <input type="number" id="price-gasolina-aditivada" placeholder="6.19" step="0.01" value="7.18">
                         </div>
                         <div class="form-group">
                             <label>Etanol (R$/L):</label>
-                            <input type="number" id="price-etanol" placeholder="4.29" step="0.01" value="4.29">
+                            <input type="number" id="price-etanol" placeholder="4.29" step="0.01" value="4.39">
                         </div>
                         <div class="form-group">
                             <label>GNV (R$/m³):</label>
-                            <input type="number" id="price-gnv" placeholder="4.99" step="0.01" value="4.99">
+                            <input type="number" id="price-gnv" placeholder="4.99" step="0.01" value="5.13">
                         </div>
                     </div>
 
@@ -1215,7 +1254,7 @@
 
                     <div style="margin-top: 25px;">
                         <button class="btn btn-success" onclick="saveSettings()">💾 Salvar Configurações</button>
-                        <button class="btn btn-secondary" onclick="backupData()">📋 Backup Manual</button>
+                        <button class="btn btn-secondary" onclick="backupDatabase()">📋 Backup Manual</button>
                         <button class="btn btn-warning" onclick="syncData()">🔄 Sincronizar Dados</button>
                         <button class="btn btn-danger" onclick="clearCache()">🗑️ Limpar Cache</button>
                     </div>
@@ -1224,14 +1263,14 @@
                         <h4>📊 Informações do Sistema</h4>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px;">
                             <div>
-                                <strong>Versão:</strong> v2.3.1<br>
+                                <strong>Versão:</strong> v3.0.0 SQLite<br>
                                 <strong>Último Backup:</strong> <span id="last-backup-time">Nunca</span><br>
-                                <strong>Usuários Ativos:</strong> 12
+                                <strong>Usuários Ativos:</strong> <span id="active-users">0</span>
                             </div>
                             <div>
                                 <strong>Total Requisições:</strong> <span id="total-requests">0</span><br>
-                                <strong>Espaço Usado:</strong> <span id="storage-used">0 KB</span><br>
-                                <strong>Uptime:</strong> 99.8%
+                                <strong>Banco de Dados:</strong> <span id="db-status">SQLite ✅</span><br>
+                                <strong>Tamanho BD:</strong> <span id="db-size">0 KB</span>
                             </div>
                         </div>
                     </div>
@@ -1373,7 +1412,7 @@
                 </div>
                 <div class="form-group">
                     <label>Litros Abastecidos:</label>
-                    <input type="number" id="edit-liters" placeholder="0.0" step="0.1" onchange="calculateTotalPrice()">
+                    <input type="number" id="edit-liters" placeholder="0.0" step="0.1" oninput="calculateTotalPriceModal()">
                 </div>
                 <div class="form-group">
                     <label>Preço Total Calculado (R$):</label>
@@ -1399,110 +1438,62 @@
     <!-- Notification -->
     <div id="notification" class="notification"></div>
 
+    <!-- SQL.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <script>
-        // ==================== VERIFICAÇÃO DE SUPORTE AO LOCALSTORAGE ====================
-        function checkLocalStorageSupport() {
-            try {
-                const test = '__localStorage_test__';
-                localStorage.setItem(test, test);
-                localStorage.removeItem(test);
-                console.log('✅ localStorage está disponível e funcionando');
-                return true;
-            } catch (e) {
-                console.error('❌ localStorage NÃO está disponível:', e);
-                alert('⚠️ ATENÇÃO: O armazenamento local não está disponível!\n\n' +
-                      'Possíveis causas:\n' +
-                      '- Modo privado/anônimo do navegador\n' +
-                      '- Configurações de privacidade bloqueando\n' +
-                      '- Quota de armazenamento excedida\n\n' +
-                      'Os dados NÃO serão salvos ao recarregar a página!');
-                return false;
-            }
-        }
+        // ==================== SISTEMA DE BANCO DE DADOS SQLITE (SQL.js) ====================
+
+        let db = null; // Instância do banco de dados SQLite
+        let SQL = null; // Biblioteca SQL.js
 
         // Estado global da aplicação
         let currentRole = '';
         let isLoggedIn = false;
+        let currentDriverName = ''; // ✅ NOME DO USUÁRIO LOGADO
 
-        // Listas de dados do sistema
+        // Listas de dados estáticos
         const cities = [
-            'Santarém',
-            'Mojuí dos Campos',
-            'Lago Grande',
-            'Vila Gorete',
-            'Juruti',
-            'Almeirim',
-            'Barcarena',
-            'Itaituba',
-            'Curuai',
-            'Vila Brasil',
-            'Membeca',
-            'Ilha das Onças'
+            'Santarém', 'Mojuí dos Campos', 'Lago Grande', 'Vila Gorete',
+            'Juruti', 'Almeirim', 'Barcarena', 'Itaituba', 'Curuai',
+            'Vila Brasil', 'Membeca', 'Ilha das Onças'
         ];
 
         const gasStations = [
-            'Posto Leal (Itaituba)',
-            'Posto Topázio (Juruti) ',
-            'Posto Nossa Senhora de Nazaré (Curuaí) ',
-            'Posto Amanhecer (Barcarena) ',
-            'Posto Equador (Frente da base)',
-            'Posto Equador (Muiraquitã com Turiano) ',
-            'Auto Amanhecer (Muiraquitã Frente a Base)',
-            'Posto Petrogás (Almerim)',
+            'Posto Leal (Itaituba)', 'Posto Topázio (Juruti)',
+            'Posto Nossa Senhora de Nazaré (Curuaí)', 'Posto Amanhecer (Barcarena)',
+            'Posto Equador (Frente da base)', 'Posto Equador (Muiraquitã com Turiano)',
+            'Auto Amanhecer (Muiraquitã Frente a Base)', 'Posto Petrogás (Almerim)',
             'Posto São João (Mojuí)'
         ];
 
         const fuelTypes = [
-            'Diesel S10',
-            'Diesel Comum',
-            'Gasolina Comum',
-            'Gasolina Aditivada',
-            'Etanol',
-            'GNV'
+            'Diesel S10', 'Diesel Comum', 'Gasolina Comum',
+            'Gasolina Aditivada', 'Etanol', 'GNV'
         ];
 
-        // Lista de motoristas disponíveis
         const availableDrivers = [
-            'ABRAÃO TRINDADE ALBUQUERQUE',
-            'AIRTON VINICIUS DOS SANTOS OLIVEIRA',
-            'ALAN DENNER PINTO DE SOUZA',
-            'ALESSANDRO OZITIO CAMPELO',
-            'ARLISON NESTOR DA CONCEIÇÃO',
-            'CARLOS ALBERTO DOS SANTOS',
-            'CIDARTA REGIS DE SOUZA',
-            'DANIEL PINTO PEDROSO',
-            'DARLEN WILSON FERREIRA SILVA',
-            'DINEY RODRIGUES DOS PASSOS',
-            'EDER JUNIOR PAPALEO DA SILVA',
-            'EDINEI DA SILVA FERREIRA',
-            'EDUARDO PINHEIRO RODRIGUES',
-            'HELIO BARBOSA COSTA',
-            'JACKSOM AMARAL DA SILVA',
-            'JANILDO PORTILHO SANTOS FILHO',
-            'JOÃO BATISTA DA SILVA BEZERRA',
-            'JOELSON MONTEIRO PEREIRA',
-            'JOSIVAN MACIEL DOS REIS',
-            'JUAN FABRICIO RODRIGUES DE LIMA',
-            'JUNIPERO MANOEL DA SILVA LOPES',
-            'KLEBER JOSE DOS SANTOS PEREIRA',
-            'MARCIO FERREIRA SABOIA',
-            'MARCOS ANDRE MENDES PEREIRA',
-            'MARIVALDO DE JESUS CORREA',
-            'MARLISSON FEITOSA BEZERRA',
-            'MATHEUS TRINDADE DE ALMEIDA',
-            'MICHAEL LUAN DOS SANTOS SILVA',
-            'NILTON MARCOS MOTA CAMPOS',
-            'RENILDO FERREIRA LAVAREDA',
-            'RIAN TEIXEIRA SIQUEIRA',
-            'ROMÁRIO LIMA RIKER',
-            'LEONARDO NANTES ALVES',
-            'JARLISSON FABIO SANTOS DE SOUSA',
-            'PEDRO HUEB TAPXURE CURRY',
-            'RAFAEL REZENDE DA SILVA'
+            'ABRAÃO TRINDADE ALBUQUERQUE', 'AIRTON VINICIUS DOS SANTOS OLIVEIRA',
+            'ALAN DENNER PINTO DE SOUZA', 'ALESSANDRO OZITIO CAMPELO',
+            'ARLISON NESTOR DA CONCEIÇÃO', 'CARLOS ALBERTO DOS SANTOS',
+            'CIDARTA REGIS DE SOUZA', 'DANIEL PINTO PEDROSO',
+            'DARLEN WILSON FERREIRA SILVA', 'DINEY RODRIGUES DOS PASSOS',
+            'EDER JUNIOR PAPALEO DA SILVA', 'EDINEI DA SILVA FERREIRA',
+            'EDUARDO PINHEIRO RODRIGUES', 'HELIO BARBOSA COSTA',
+            'JACKSOM AMARAL DA SILVA', 'JANILDO PORTILHO SANTOS FILHO',
+            'JOÃO BATISTA DA SILVA BEZERRA', 'JOELSON MONTEIRO PEREIRA',
+            'JOSIVAN MACIEL DOS REIS', 'JUAN FABRICIO RODRIGUES DE LIMA',
+            'JUNIPERO MANOEL DA SILVA LOPES', 'KLEBER JOSE DOS SANTOS PEREIRA',
+            'MARCIO FERREIRA SABOIA', 'MARCOS ANDRE MENDES PEREIRA',
+            'MARIVALDO DE JESUS CORREA', 'MARLISSON FEITOSA BEZERRA',
+            'MATHEUS TRINDADE DE ALMEIDA', 'MICHAEL LUAN DOS SANTOS SILVA',
+            'NILTON MARCOS MOTA CAMPOS', 'RENILDO FERREIRA LAVAREDA',
+            'RIAN TEIXEIRA SIQUEIRA', 'ROMÁRIO LIMA RIKER',
+            'LEONARDO NANTES ALVES', 'JARLISSON FABIO SANTOS DE SOUSA',
+            'PEDRO HUEB TAPXURE CURRY', 'RAFAEL REZENDE DA SILVA'
         ];
 
-        // Lista inicial de veículos para popular o sistema
         const initialVehicles = [
             { plate: 'BCQ0937', model: 'F4000', year: '2023', status: 'Ativo', color: 'Branca', km: 0, lastFuel: 'Nunca' },
             { plate: 'JJB4E57', model: 'CARGO 1217', year: '2002', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
@@ -1536,11 +1527,6 @@
             { plate: 'QVN99H33', model: 'HB20', year: '2022', status: 'Ativo', color: 'BRANCA', km: 0, lastFuel: 'Nunca' }
         ];
 
-        // Dados do sistema
-        let requests = [];
-        let vehicles = [];
-        let fuelRecords = [];
-
         // Preços de combustíveis
         let fuelPrices = {
             'Diesel S10': 6.69,
@@ -1552,254 +1538,512 @@
             lastUpdate: new Date().toISOString()
         };
 
-        // ==================== SISTEMA DE ARMAZENAMENTO COM DEBUG ====================
+        // ==================== INICIALIZAÇÃO DO BANCO DE DADOS ====================
 
-        function autoSave() {
+        async function initDatabase() {
             try {
-                const data = {
-                    requests: requests,
-                    vehicles: vehicles,
-                    fuelRecords: fuelRecords,
-                    fuelPrices: fuelPrices,
-                    lastSave: new Date().toISOString()
-                };
+                showLoading(true);
+                console.log('🔄 Inicializando SQL.js...');
 
-                localStorage.setItem('rezende-energia-data', JSON.stringify(data));
-
-                // Debug: Verificar se salvou
-                const verificacao = localStorage.getItem('rezende-energia-data');
-                console.log('✅ Dados salvos com sucesso!', {
-                    requisicoes: requests.length,
-                    veiculos: vehicles.length,
-                    registros: fuelRecords.length,
-                    tamanho: (JSON.stringify(data).length / 1024).toFixed(2) + ' KB',
-                    verificado: verificacao !== null,
-                    timestamp: new Date().toLocaleString('pt-BR')
+                // Carregar SQL.js
+                SQL = await initSqlJs({
+                    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
                 });
 
-                // Atualizar informações do sistema
-                updateSystemInfo();
+                console.log('✅ SQL.js carregado com sucesso!');
 
+                // Tentar carregar banco existente do localStorage
+                const savedDB = localStorage.getItem('rezende-energia-sqlite-db');
+
+                if (savedDB) {
+                    console.log('📂 Carregando banco de dados existente...');
+                    const uint8Array = new Uint8Array(JSON.parse(savedDB));
+                    db = new SQL.Database(uint8Array);
+                    console.log('✅ Banco de dados carregado do localStorage!');
+                } else {
+                    console.log('🆕 Criando novo banco de dados...');
+                    db = new SQL.Database();
+                    createTables();
+                    initializeDefaultData();
+                    saveDatabase();
+                    console.log('✅ Novo banco de dados criado!');
+                }
+
+                showLoading(false);
                 return true;
-            } catch (e) {
-                console.error('❌ ERRO ao salvar dados:', e);
-                showNotification('Erro ao salvar dados: ' + e.message, 'error');
+            } catch (error) {
+                console.error('❌ Erro ao inicializar banco de dados:', error);
+                showNotification('Erro ao inicializar banco de dados: ' + error.message, 'error');
+                showLoading(false);
                 return false;
             }
         }
 
-        function loadDataFromStorage() {
-            try {
-                console.log('🔄 Tentando carregar dados do localStorage...');
+        function createTables() {
+            console.log('🔨 Criando tabelas do banco de dados...');
 
-                const saved = localStorage.getItem('rezende-energia-data');
+            // Tabela de Requisições
+            db.run(`
+                CREATE TABLE IF NOT EXISTS requests (
+                    id TEXT PRIMARY KEY,
+                    driver TEXT NOT NULL,
+                    plate TEXT NOT NULL,
+                    vehicle TEXT NOT NULL,
+                    city TEXT NOT NULL,
+                    gasStation TEXT NOT NULL,
+                    fuelType TEXT NOT NULL,
+                    fuelMethod TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    date TEXT NOT NULL,
+                    supervisor TEXT,
+                    estimatedValue TEXT,
+                    realValue TEXT,
+                    km INTEGER,
+                    priority TEXT,
+                    notes TEXT,
+                    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
 
-                if (saved) {
-                    const data = JSON.parse(saved);
-                    requests = data.requests || [];
-                    vehicles = data.vehicles && data.vehicles.length > 0 ? data.vehicles : [...initialVehicles];
-                    fuelRecords = data.fuelRecords || [];
-                    fuelPrices = data.fuelPrices || fuelPrices;
+            // Tabela de Veículos
+            db.run(`
+                CREATE TABLE IF NOT EXISTS vehicles (
+                    plate TEXT PRIMARY KEY,
+                    model TEXT NOT NULL,
+                    year TEXT NOT NULL,
+                    km INTEGER DEFAULT 0,
+                    lastFuel TEXT DEFAULT 'Nunca',
+                    status TEXT DEFAULT 'Ativo',
+                    color TEXT,
+                    notes TEXT
+                )
+            `);
 
-                    if (vehicles.length === 0) {
-                        vehicles = [...initialVehicles];
-                    }
+            // Tabela de Registros de Abastecimento
+            db.run(`
+                CREATE TABLE IF NOT EXISTS fuelRecords (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    requestId TEXT NOT NULL,
+                    driver TEXT NOT NULL,
+                    vehicle TEXT NOT NULL,
+                    gasStation TEXT NOT NULL,
+                    fuelType TEXT NOT NULL,
+                    estimatedValue TEXT,
+                    realValue TEXT,
+                    liters REAL,
+                    status TEXT DEFAULT 'pending',
+                    date TEXT NOT NULL,
+                    notes TEXT,
+                    FOREIGN KEY (requestId) REFERENCES requests(id)
+                )
+            `);
 
-                    console.log('✅ Dados carregados com sucesso!', {
-                        requisicoes: requests.length,
-                        veiculos: vehicles.length,
-                        registrosAbastecimento: fuelRecords.length,
-                        ultimoSalvamento: data.lastSave ? new Date(data.lastSave).toLocaleString('pt-BR') : 'Não disponível'
-                    });
+            // Tabela de Preços de Combustíveis
+            db.run(`
+                CREATE TABLE IF NOT EXISTS fuelPrices (
+                    fuelType TEXT PRIMARY KEY,
+                    price REAL NOT NULL,
+                    lastUpdate DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
 
-                } else {
-                    console.log('⚠️ Nenhum dado salvo encontrado. Inicializando veículos padrão...');
-                    requests = [];
-                    vehicles = [...initialVehicles];
-                    fuelRecords = [];
-                    autoSave();
-                }
-
-                updateSystemInfo();
-            } catch (e) {
-                console.error('❌ ERRO ao carregar dados:', e);
-                showNotification('Erro ao carregar dados salvos. Iniciando sistema limpo.', 'error');
-                requests = [];
-                vehicles = [...initialVehicles];
-                fuelRecords = [];
-            }
+            console.log('✅ Tabelas criadas com sucesso!');
         }
 
-        // ==================== SISTEMA DE BACKUP AUTOMÁTICO ====================
+        function initializeDefaultData() {
+            console.log('📝 Inserindo dados iniciais...');
 
-        function autoBackupToFile() {
+            // Inserir veículos iniciais
+            const insertVehicle = db.prepare(`
+                INSERT INTO vehicles (plate, model, year, km, lastFuel, status, color, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `);
+
+            initialVehicles.forEach(vehicle => {
+                insertVehicle.run([
+                    vehicle.plate,
+                    vehicle.model,
+                    vehicle.year,
+                    vehicle.km,
+                    vehicle.lastFuel,
+                    vehicle.status,
+                    vehicle.color,
+                    'Veículo cadastrado automaticamente'
+                ]);
+            });
+
+            insertVehicle.free();
+
+            // Inserir preços de combustíveis
+            const insertPrice = db.prepare(`
+                INSERT INTO fuelPrices (fuelType, price, lastUpdate)
+                VALUES (?, ?, ?)
+            `);
+
+            Object.keys(fuelPrices).forEach(key => {
+                if (key !== 'lastUpdate') {
+                    insertPrice.run([key, fuelPrices[key], new Date().toISOString()]);
+                }
+            });
+
+            insertPrice.free();
+
+            console.log('✅ Dados iniciais inseridos!');
+        }
+
+        function saveDatabase() {
             try {
-                const data = {
-                    requests: requests,
-                    vehicles: vehicles,
-                    fuelRecords: fuelRecords,
-                    fuelPrices: fuelPrices,
-                    timestamp: new Date().toISOString()
-                };
-
-                // Salvar no localStorage de backup
-                localStorage.setItem('rezende-energia-backup', JSON.stringify(data));
-
-                console.log('💾 Backup automático criado', {
-                    requisicoes: requests.length,
-                    veiculos: vehicles.length,
-                    registros: fuelRecords.length,
-                    timestamp: new Date().toLocaleString('pt-BR')
-                });
+                const data = db.export();
+                const buffer = Array.from(data);
+                localStorage.setItem('rezende-energia-sqlite-db', JSON.stringify(buffer));
 
                 // Atualizar informações do sistema
+                const sizeKB = (buffer.length / 1024).toFixed(2);
+                const dbSizeElement = document.getElementById('db-size');
+                if (dbSizeElement) {
+                    dbSizeElement.textContent = sizeKB + ' KB';
+                }
+
                 const lastBackupElement = document.getElementById('last-backup-time');
                 if (lastBackupElement) {
                     lastBackupElement.textContent = new Date().toLocaleString('pt-BR');
                 }
 
+                console.log(`💾 Banco de dados salvo! Tamanho: ${sizeKB} KB`);
                 return true;
-            } catch (e) {
-                console.error('❌ Erro ao criar backup automático:', e);
+            } catch (error) {
+                console.error('❌ Erro ao salvar banco de dados:', error);
                 return false;
             }
         }
 
-        function restoreFromBackup() {
-            try {
-                const backup = localStorage.getItem('rezende-energia-backup');
-                const mainData = localStorage.getItem('rezende-energia-data');
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.className = show ? 'loading active' : 'loading';
+            }
+        }
 
-                if (backup && !mainData) {
-                    console.log('🔄 Dados principais não encontrados. Restaurando do backup...');
-                    const data = JSON.parse(backup);
-                    localStorage.setItem('rezende-energia-data', JSON.stringify(data));
-                    showNotification('Dados restaurados do backup automático!', 'success');
-                    return true;
-                }
+        // ==================== FUNÇÕES DE CONSULTA AO BANCO ====================
 
-                if (backup && mainData) {
-                    const backupData = JSON.parse(backup);
-                    const currentData = JSON.parse(mainData);
+        function getAllRequests() {
+            const result = db.exec(`
+                SELECT * FROM requests
+                ORDER BY date DESC, id DESC
+            `);
 
-                    const backupTime = new Date(backupData.timestamp).getTime();
-                    const currentTime = new Date(currentData.lastSave || 0).getTime();
+            if (result.length === 0) return [];
 
-                    // Restaurar se o backup for mais recente E tiver mais dados
-                    if (backupTime > currentTime && backupData.requests.length > currentData.requests.length) {
-                        console.log('🔄 Backup mais recente encontrado. Restaurando...');
-                        localStorage.setItem('rezende-energia-data', JSON.stringify(backupData));
-                        showNotification('Dados restaurados do backup mais recente!', 'warning');
-                        return true;
-                    }
-                }
+            const columns = result[0].columns;
+            const values = result[0].values;
 
-                return false;
-            } catch (e) {
-                console.error('❌ Erro ao restaurar backup:', e);
-                return false;
+            return values.map(row => {
+                const obj = {};
+                columns.forEach((col, index) => {
+                    obj[col] = row[index];
+                });
+                return obj;
+            });
+        }
+
+        function getAllVehicles() {
+            const result = db.exec(`SELECT * FROM vehicles ORDER BY plate`);
+
+            if (result.length === 0) return [];
+
+            const columns = result[0].columns;
+            const values = result[0].values;
+
+            return values.map(row => {
+                const obj = {};
+                columns.forEach((col, index) => {
+                    obj[col] = row[index];
+                });
+                return obj;
+            });
+        }
+
+        function getAllFuelRecords() {
+            const result = db.exec(`
+                SELECT * FROM fuelRecords
+                ORDER BY date DESC, id DESC
+            `);
+
+            if (result.length === 0) return [];
+
+            const columns = result[0].columns;
+            const values = result[0].values;
+
+            return values.map(row => {
+                const obj = {};
+                columns.forEach((col, index) => {
+                    obj[col] = row[index];
+                });
+                return obj;
+            });
+        }
+
+        function getFuelPrices() {
+            const result = db.exec(`SELECT * FROM fuelPrices`);
+
+            if (result.length === 0) return fuelPrices;
+
+            const columns = result[0].columns;
+            const values = result[0].values;
+
+            const prices = {};
+            values.forEach(row => {
+                prices[row[0]] = row[1]; // fuelType, price
+            });
+
+            prices.lastUpdate = new Date().toISOString();
+            return prices;
+        }
+
+        // ==================== FUNÇÕES DE LOGIN ====================
+
+        function showDriverLogin() {
+            const driverSelect = document.getElementById('driver-name');
+            driverSelect.innerHTML = '<option value="">Selecione seu nome</option>';
+
+            availableDrivers.forEach(driver => {
+                const option = document.createElement('option');
+                option.value = driver;
+                option.textContent = driver;
+                driverSelect.appendChild(option);
+            });
+
+            document.getElementById('role-selection').style.display = 'none';
+            document.getElementById('driver-login').style.display = 'block';
+        }
+
+        function loginAsDriver() {
+            const driverName = document.getElementById('driver-name').value;
+
+            if (!driverName) {
+                showNotification('Por favor, selecione seu nome!', 'error');
+                return;
+            }
+
+            currentRole = 'motorista';
+            currentDriverName = driverName;
+            isLoggedIn = true;
+            showMainApp();
+        }
+
+        function showSupervisorLogin() {
+            document.getElementById('role-selection').style.display = 'none';
+            document.getElementById('supervisor-login').style.display = 'block';
+        }
+
+        function backToRoleSelection() {
+            document.getElementById('role-selection').style.display = 'block';
+            document.getElementById('supervisor-login').style.display = 'none';
+            document.getElementById('driver-login').style.display = 'none';
+        }
+
+        function loginAsSupervisor() {
+            const username = document.getElementById('supervisor-username').value;
+            const password = document.getElementById('supervisor-password').value;
+
+            const supervisors = {
+                'Airton': '123',
+                'Eduardo': '2025',
+                'Pedro': '456'
+            };
+
+            if (supervisors[username] && supervisors[username] === password) {
+                currentRole = 'supervisor';
+                currentDriverName = username;
+                isLoggedIn = true;
+                showMainApp();
+            } else {
+                showNotification('Usuário ou senha incorretos!', 'error');
+            }
+        }
+
+        function logout() {
+            isLoggedIn = false;
+            currentRole = '';
+            currentDriverName = '';
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('main-app').style.display = 'none';
+
+            document.getElementById('supervisor-username').value = '';
+            document.getElementById('supervisor-password').value = '';
+            document.getElementById('driver-name').value = '';
+            backToRoleSelection();
+        }
+
+        function showMainApp() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+
+            setupUserInterface();
+            updateCurrentDate();
+            loadRecentActivities();
+            loadAllRequests();
+            loadVehicles();
+            loadFuelRecords();
+            loadFuelPrices();
+            generateReport();
+            updateStats();
+            updateSystemInfo();
+        }
+
+        function setupUserInterface() {
+            const userRoleDisplay = document.getElementById('user-role-display');
+            const navVehicles = document.getElementById('nav-vehicles');
+            const navReports = document.getElementById('nav-reports');
+            const navSettings = document.getElementById('nav-settings');
+            const navFuelRecords = document.getElementById('nav-fuel-records');
+            const navFuelPrices = document.getElementById('nav-fuel-prices');
+            const actionReports = document.getElementById('action-reports');
+            const actionExport = document.getElementById('action-export');
+            const statsGrid = document.getElementById('stats-grid');
+            const filtersSection = document.getElementById('filters-section');
+            const actionsHeader = document.getElementById('actions-header');
+            const requestsActionsHeader = document.getElementById('requests-actions-header');
+
+            if (currentRole === 'supervisor') {
+                userRoleDisplay.textContent = `👨‍💼 Supervisor - ${currentDriverName}`;
+                if (navVehicles) navVehicles.classList.remove('hidden');
+                if (navReports) navReports.classList.remove('hidden');
+                if (navSettings) navSettings.classList.remove('hidden');
+                if (navFuelRecords) navFuelRecords.classList.remove('hidden');
+                if (navFuelPrices) navFuelPrices.classList.remove('hidden');
+                if (actionReports) actionReports.style.display = 'block';
+                if (actionExport) actionExport.style.display = 'block';
+                if (statsGrid) statsGrid.style.pointerEvents = 'auto';
+                if (filtersSection) filtersSection.style.display = 'grid';
+                if (actionsHeader) actionsHeader.style.display = 'table-cell';
+                if (requestsActionsHeader) requestsActionsHeader.style.display = 'table-cell';
+            } else {
+                userRoleDisplay.textContent = `🚛 Motorista - ${currentDriverName}`;
+                if (navVehicles) navVehicles.classList.add('hidden');
+                if (navReports) navReports.classList.add('hidden');
+                if (navSettings) navSettings.classList.add('hidden');
+                if (navFuelRecords) navFuelRecords.classList.add('hidden');
+                if (navFuelPrices) navFuelPrices.classList.add('hidden');
+                if (actionReports) actionReports.style.display = 'none';
+                if (actionExport) actionExport.style.display = 'none';
+                if (statsGrid) statsGrid.style.pointerEvents = 'none';
+                if (filtersSection) filtersSection.style.display = 'none';
+                if (actionsHeader) actionsHeader.style.display = 'none';
+                if (requestsActionsHeader) requestsActionsHeader.style.display = 'none';
+            }
+
+            populateSelects();
+        }
+
+        function updateCurrentDate() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const dateElement = document.getElementById('current-date');
+            if (dateElement) {
+                dateElement.textContent = dateStr;
             }
         }
 
         function updateSystemInfo() {
-            try {
-                const totalElement = document.getElementById('total-requests');
-                if (totalElement) {
-                    totalElement.textContent = requests.length;
+            const totalElement = document.getElementById('total-requests');
+            if (totalElement) {
+                const requests = getAllRequests();
+                totalElement.textContent = requests.length;
+            }
+
+            // Contar usuários únicos que criaram requisições
+            const activeUsersElement = document.getElementById('active-users');
+            if (activeUsersElement) {
+                const requests = getAllRequests();
+                const uniqueDrivers = [...new Set(requests.map(r => r.driver))];
+                activeUsersElement.textContent = uniqueDrivers.length;
+            }
+        }
+
+        // ==================== CONTINUAÇÃO NO PRÓXIMO BLOCO ====================
+
+Por questões de tamanho, vou criar um **ARQUIVO SEPARADO** com todo o resto do JavaScript. Deseja que eu continue com a segunda parte ou prefere o link para download do arquivo completo?
+
+Posso também criar um repositório no GitHub com o código completo já funcional! O que prefere? 🚀
+      // ==================== FUNÇÕES DE INTERFACE ====================
+
+        function populateSelects() {
+            // Popular cidades
+            const citySelects = ['new-request-city'];
+            citySelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    select.innerHTML = '<option value="">Selecione uma cidade</option>';
+                    cities.forEach(city => {
+                        const option = document.createElement('option');
+                        option.value = city;
+                        option.textContent = city;
+                        select.appendChild(option);
+                    });
                 }
+            });
 
-                const storageElement = document.getElementById('storage-used');
-                if (storageElement) {
-                    const data = localStorage.getItem('rezende-energia-data');
-                    if (data) {
-                        const sizeKB = (data.length / 1024).toFixed(2);
-                        storageElement.textContent = sizeKB + ' KB';
-                    }
+            // Popular postos
+            const stationSelects = ['new-request-gas-station'];
+            stationSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    select.innerHTML = '<option value="">Selecione um posto</option>';
+                    gasStations.forEach(station => {
+                        const option = document.createElement('option');
+                        option.value = station;
+                        option.textContent = station;
+                        select.appendChild(option);
+                    });
                 }
-            } catch (e) {
-                console.error('Erro ao atualizar informações do sistema:', e);
-            }
+            });
+
+            // Popular combustíveis
+            const fuelSelects = ['new-request-fuel-type'];
+            fuelSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    select.innerHTML = '<option value="">Selecione o combustível</option>';
+                    fuelTypes.forEach(fuel => {
+                        const option = document.createElement('option');
+                        option.value = fuel;
+                        option.textContent = fuel;
+                        select.appendChild(option);
+                    });
+                }
+            });
+
+            // Popular motoristas no formulário (para supervisor)
+            const driverFormSelects = ['new-request-driver'];
+            driverFormSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    select.innerHTML = '<option value="">Selecione um motorista</option>';
+                    availableDrivers.forEach(driver => {
+                        const option = document.createElement('option');
+                        option.value = driver;
+                        option.textContent = driver;
+                        select.appendChild(option);
+                    });
+                }
+            });
+
+            updateVehiclePlatesSelect();
+            populateDriverFilters();
         }
 
-        // Função para calcular preço total baseado em litros e tipo de combustível
-        function calculateTotalPrice(fuelType, liters) {
-            if (!fuelType || !liters) return null;
-            const pricePerLiter = fuelPrices[fuelType] || 0;
-            return (pricePerLiter * liters).toFixed(2);
-        }
-
-        // Função para salvar preços de combustíveis
-        function saveFuelPrices() {
-            if (currentRole !== 'supervisor') {
-                showNotification('Apenas supervisores podem alterar preços!', 'error');
-                return;
-            }
-
-            fuelPrices = {
-                'Diesel S10': parseFloat(document.getElementById('price-diesel-s10').value) || 6.49,
-                'Diesel Comum': parseFloat(document.getElementById('price-diesel-comum').value) || 6.29,
-                'Gasolina Comum': parseFloat(document.getElementById('price-gasolina-comum').value) || 5.89,
-                'Gasolina Aditivada': parseFloat(document.getElementById('price-gasolina-aditivada').value) || 6.19,
-                'Etanol': parseFloat(document.getElementById('price-etanol').value) || 4.29,
-                'GNV': parseFloat(document.getElementById('price-gnv').value) || 4.99,
-                lastUpdate: new Date().toISOString()
-            };
-
-            autoSave();
-            autoBackupToFile();
-            loadFuelPricesList();
-            showNotification('Preços de combustíveis salvos com sucesso!', 'success');
-        }
-
-        // Função para carregar preços de combustíveis
-        function loadFuelPrices() {
-            document.getElementById('price-diesel-s10').value = fuelPrices['Diesel S10'] || 6.49;
-            document.getElementById('price-diesel-comum').value = fuelPrices['Diesel Comum'] || 6.29;
-            document.getElementById('price-gasolina-comum').value = fuelPrices['Gasolina Comum'] || 5.89;
-            document.getElementById('price-gasolina-aditivada').value = fuelPrices['Gasolina Aditivada'] || 6.19;
-            document.getElementById('price-etanol').value = fuelPrices['Etanol'] || 4.29;
-            document.getElementById('price-gnv').value = fuelPrices['GNV'] || 4.99;
-
-            const lastUpdate = document.getElementById('last-price-update');
-            if (lastUpdate && fuelPrices.lastUpdate) {
-                lastUpdate.textContent = formatDate(fuelPrices.lastUpdate.split('T')[0]) + ' às ' +
-                    new Date(fuelPrices.lastUpdate).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
-            }
-
-            loadFuelPricesList();
-        }
-
-        // Função para listar preços na tabela
-        function loadFuelPricesList() {
-            const tbody = document.getElementById('fuel-prices-list');
-            if (!tbody) return;
-
-            const fuelTypesList = ['Diesel S10', 'Diesel Comum', 'Gasolina Comum', 'Gasolina Aditivada', 'Etanol', 'GNV'];
-
-            tbody.innerHTML = fuelTypesList.map(fuel => `
-                <tr>
-                    <td><strong>${fuel}</strong></td>
-                    <td>R$ ${fuelPrices[fuel].toFixed(2).replace('.', ',')}</td>
-                    <td><span class="status-badge status-completed">Ativo</span></td>
-                </tr>
-            `).join('');
-        }
-
-        // Função para inicializar veículos na primeira execução
-        function initializeVehicles() {
-            if (vehicles.length === 0) {
-                vehicles = [...initialVehicles];
-                autoSave();
-                console.log('Veículos iniciais carregados no sistema');
-            }
-        }
-
-        // Atualizar select de placas de veículos
         function updateVehiclePlatesSelect() {
             const plateSelect = document.getElementById('new-request-plate');
             if (plateSelect) {
                 plateSelect.innerHTML = '<option value="">Selecione uma placa</option>';
 
+                const vehicles = getAllVehicles();
                 vehicles.forEach(vehicle => {
                     const option = document.createElement('option');
                     option.value = vehicle.plate;
@@ -1810,7 +2054,6 @@
             }
         }
 
-        // Atualizar modelo do veículo automaticamente quando placa é selecionada
         function updateVehicleModel() {
             const plateSelect = document.getElementById('new-request-plate');
             const modelInput = document.getElementById('new-request-vehicle-model');
@@ -1825,9 +2068,9 @@
             }
         }
 
-        // Função para popular filtros de motoristas
         function populateDriverFilters() {
             const filterSelects = ['filter-driver', 'filter-fuel-driver'];
+            const requests = getAllRequests();
 
             const allDrivers = [...new Set([
                 ...availableDrivers,
@@ -1849,192 +2092,6 @@
                     });
                 }
             });
-        }
-
-        // Função para popular selects
-        function populateSelects() {
-            initializeVehicles();
-
-            const citySelects = ['new-request-city'];
-            citySelects.forEach(selectId => {
-                const select = document.getElementById(selectId);
-                if (select) {
-                    select.innerHTML = '<option value="">Selecione uma cidade</option>';
-                    cities.forEach(city => {
-                        const option = document.createElement('option');
-                        option.value = city;
-                        option.textContent = city;
-                        select.appendChild(option);
-                    });
-                }
-            });
-
-            const stationSelects = ['new-request-gas-station'];
-            stationSelects.forEach(selectId => {
-                const select = document.getElementById(selectId);
-                if (select) {
-                    select.innerHTML = '<option value="">Selecione um posto</option>';
-                    gasStations.forEach(station => {
-                        const option = document.createElement('option');
-                        option.value = station;
-                        option.textContent = station;
-                        select.appendChild(option);
-                    });
-                }
-            });
-
-            const fuelSelects = ['new-request-fuel-type'];
-            fuelSelects.forEach(selectId => {
-                const select = document.getElementById(selectId);
-                if (select) {
-                    select.innerHTML = '<option value="">Selecione o combustível</option>';
-                    fuelTypes.forEach(fuel => {
-                        const option = document.createElement('option');
-                        option.value = fuel;
-                        option.textContent = fuel;
-                        select.appendChild(option);
-                    });
-                }
-            });
-
-            const driverFormSelects = ['new-request-driver'];
-            driverFormSelects.forEach(selectId => {
-                const select = document.getElementById(selectId);
-                if (select) {
-                    select.innerHTML = '<option value="">Selecione um motorista</option>';
-                    availableDrivers.forEach(driver => {
-                        const option = document.createElement('option');
-                        option.value = driver;
-                        option.textContent = driver;
-                        select.appendChild(option);
-                    });
-                }
-            });
-
-            updateVehiclePlatesSelect();
-            populateDriverFilters();
-        }
-
-        // Funções de login
-        function loginAsDriver() {
-            currentRole = 'motorista';
-            isLoggedIn = true;
-            showMainApp();
-        }
-
-        function showSupervisorLogin() {
-            document.getElementById('role-selection').style.display = 'none';
-            document.getElementById('supervisor-login').style.display = 'block';
-        }
-
-        function backToRoleSelection() {
-            document.getElementById('role-selection').style.display = 'block';
-            document.getElementById('supervisor-login').style.display = 'none';
-        }
-
-        function loginAsSupervisor() {
-            const username = document.getElementById('supervisor-username').value;
-            const password = document.getElementById('supervisor-password').value;
-
-            const supervisors = {
-                'Airton': '123',
-                'Eduardo': '2025',
-                'Pedro': '456'
-            };
-
-            if (supervisors[username] && supervisors[username] === password) {
-                currentRole = 'supervisor';
-                isLoggedIn = true;
-                showMainApp();
-            } else {
-                showNotification('Usuário ou senha incorretos!', 'error');
-            }
-        }
-
-        function logout() {
-            isLoggedIn = false;
-            currentRole = '';
-            document.getElementById('login-screen').style.display = 'flex';
-            document.getElementById('main-app').style.display = 'none';
-
-            document.getElementById('supervisor-username').value = '';
-            document.getElementById('supervisor-password').value = '';
-            backToRoleSelection();
-        }
-
-        function showMainApp() {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-app').style.display = 'flex';
-
-            setupUserInterface();
-            updateCurrentDate();
-            loadDataFromStorage();
-            loadRecentActivities();
-            loadAllRequests();
-            loadVehicles();
-            loadFuelRecords();
-            generateReport();
-            updateStats();
-        }
-
-        function setupUserInterface() {
-            const userRoleDisplay = document.getElementById('user-role-display');
-            const navVehicles = document.getElementById('nav-vehicles');
-            const navReports = document.getElementById('nav-reports');
-            const navSettings = document.getElementById('nav-settings');
-            const navFuelRecords = document.getElementById('nav-fuel-records');
-            const navFuelPrices = document.getElementById('nav-fuel-prices');
-            const actionReports = document.getElementById('action-reports');
-            const actionExport = document.getElementById('action-export');
-            const statsGrid = document.getElementById('stats-grid');
-            const filtersSection = document.getElementById('filters-section');
-            const actionsHeader = document.getElementById('actions-header');
-            const requestsActionsHeader = document.getElementById('requests-actions-header');
-
-            if (currentRole === 'supervisor') {
-                userRoleDisplay.textContent = '👨‍💼 Supervisor';
-                if (navVehicles) navVehicles.classList.remove('hidden');
-                if (navReports) navReports.classList.remove('hidden');
-                if (navSettings) navSettings.classList.remove('hidden');
-                if (navFuelRecords) navFuelRecords.classList.remove('hidden');
-                if (navFuelPrices) navFuelPrices.classList.remove('hidden');
-                if (actionReports) actionReports.style.display = 'block';
-                if (actionExport) actionExport.style.display = 'block';
-                if (statsGrid) statsGrid.style.pointerEvents = 'auto';
-                if (filtersSection) filtersSection.style.display = 'grid';
-                if (actionsHeader) actionsHeader.style.display = 'table-cell';
-                if (requestsActionsHeader) requestsActionsHeader.style.display = 'table-cell';
-            } else {
-                userRoleDisplay.textContent = '🚛 Motorista';
-                if (navVehicles) navVehicles.classList.add('hidden');
-                if (navReports) navReports.classList.add('hidden');
-                if (navSettings) navSettings.classList.add('hidden');
-                if (navFuelRecords) navFuelRecords.classList.add('hidden');
-                if (navFuelPrices) navFuelPrices.classList.add('hidden');
-                if (actionReports) actionReports.style.display = 'none';
-                if (actionExport) actionExport.style.display = 'none';
-                if (statsGrid) statsGrid.style.pointerEvents = 'none';
-                if (filtersSection) filtersSection.style.display = 'none';
-                if (actionsHeader) actionsHeader.style.display = 'none';
-                if (requestsActionsHeader) requestsActionsHeader.style.display = 'none';
-            }
-
-            populateSelects();
-        }
-
-        // Função para atualizar data atual
-        function updateCurrentDate() {
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('pt-BR', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            const dateElement = document.getElementById('current-date');
-            if (dateElement) {
-                dateElement.textContent = dateStr;
-            }
         }
 
         function showScreen(screenId) {
@@ -2088,15 +2145,17 @@
             return screenNames[screenId] || '';
         }
 
-        // Carregar atividades recentes
+        // ==================== FUNÇÕES DE CARREGAMENTO DE DADOS ====================
+
         function loadRecentActivities() {
             const tbody = document.getElementById('recent-activities');
             if (!tbody) return;
 
-            let recentRequests = requests.slice(0, 5);
+            const allRequests = getAllRequests();
+            let recentRequests = allRequests.slice(0, 5);
 
             if (currentRole === 'motorista') {
-                recentRequests = requests.filter(req => req.driver === 'Motorista Atual').slice(0, 5);
+                recentRequests = allRequests.filter(req => req.driver === currentDriverName).slice(0, 5);
             }
 
             if (recentRequests.length === 0) {
@@ -2112,13 +2171,12 @@
                     <td>${req.city || 'N/A'}</td>
                     <td><span class="status-badge status-${req.status}">${getStatusText(req.status)}</span></td>
                     <td>${formatDate(req.date)}</td>
-                    <td>${req.estimatedValue || req.value || 'N/A'}</td>
+                    <td>${req.estimatedValue || 'N/A'}</td>
                     <td>
                         <button class="btn btn-small" onclick="viewRequest('${req.id}')">👁️</button>
                         ${currentRole === 'supervisor' && req.status === 'pending' ? `
                             <button class="btn btn-small btn-success" onclick="approveRequest('${req.id}')">✅</button>
-                            <button class="btn btn
-        -small btn-danger" onclick="rejectRequest('${req.id}')">❌</button>
+                            <button class="btn btn-small btn-danger" onclick="rejectRequest('${req.id}')">❌</button>
                         ` : ''}
                         ${currentRole === 'supervisor' && req.status === 'signed' ? `
                             <button class="btn btn-small btn-warning" onclick="markAsFueled('${req.id}')">⛽</button>
@@ -2128,15 +2186,15 @@
             `).join('');
         }
 
-        // Carregar todas as requisições
         function loadAllRequests() {
             const tbody = document.getElementById('all-requests');
             if (!tbody) return;
 
-            let filteredRequests = [...requests];
+            const allRequests = getAllRequests();
+            let filteredRequests = [...allRequests];
 
             if (currentRole === 'motorista') {
-                filteredRequests = requests.filter(req => req.driver === 'Motorista Atual');
+                filteredRequests = allRequests.filter(req => req.driver === currentDriverName);
             }
 
             if (filteredRequests.length === 0) {
@@ -2155,7 +2213,7 @@
                     <td><span class="status-badge status-${req.status}">${getStatusText(req.status)}</span></td>
                     <td>${formatDate(req.date)}</td>
                     <td>${req.supervisor || 'N/A'}</td>
-                    <td>${req.estimatedValue || req.value || 'N/A'}</td>
+                    <td>${req.estimatedValue || 'N/A'}</td>
                     <td>${req.km ? req.km.toLocaleString() + ' km' : 'N/A'}</td>
                     <td>
                         <button class="btn btn-small" onclick="viewRequest('${req.id}')">👁️</button>
@@ -2173,12 +2231,13 @@
             `).join('');
         }
 
-        // Carregar veículos (apenas supervisor)
         function loadVehicles() {
             if (currentRole !== 'supervisor') return;
 
             const tbody = document.getElementById('vehicles-list');
             if (!tbody) return;
+
+            const vehicles = getAllVehicles();
 
             if (vehicles.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #64748b; padding: 40px;">Nenhum veículo cadastrado</td></tr>';
@@ -2201,12 +2260,14 @@
             `).join('');
         }
 
-        // Carregar registros de abastecimento
         function loadFuelRecords() {
             if (currentRole !== 'supervisor') return;
 
             const tbody = document.getElementById('fuel-records-list');
             if (!tbody) return;
+
+            const fuelRecords = getAllFuelRecords();
+            const prices = getFuelPrices();
 
             if (fuelRecords.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; color: #64748b; padding: 40px;">Nenhum registro de abastecimento encontrado</td></tr>';
@@ -2214,8 +2275,8 @@
             }
 
             tbody.innerHTML = fuelRecords.map(record => {
-                const pricePerLiter = fuelPrices[record.fuelType] || 0;
-                const totalPrice = record.liters ? calculateTotalPrice(record.fuelType, record.liters) : 'N/A';
+                const pricePerLiter = prices[record.fuelType] || 0;
+                const totalPrice = record.liters ? (pricePerLiter * record.liters).toFixed(2) : 'N/A';
 
                 return `
                 <tr>
@@ -2241,7 +2302,43 @@
             }).join('');
         }
 
-        // Funções auxiliares
+        function loadFuelPrices() {
+            const prices = getFuelPrices();
+
+            document.getElementById('price-diesel-s10').value = prices['Diesel S10'] || 6.69;
+            document.getElementById('price-diesel-comum').value = prices['Diesel Comum'] || 6.10;
+            document.getElementById('price-gasolina-comum').value = prices['Gasolina Comum'] || 6.43;
+            document.getElementById('price-gasolina-aditivada').value = prices['Gasolina Aditivada'] || 7.18;
+            document.getElementById('price-etanol').value = prices['Etanol'] || 4.39;
+            document.getElementById('price-gnv').value = prices['GNV'] || 5.13;
+
+            const lastUpdate = document.getElementById('last-price-update');
+            if (lastUpdate && prices.lastUpdate) {
+                lastUpdate.textContent = formatDate(prices.lastUpdate.split('T')[0]) + ' às ' +
+                    new Date(prices.lastUpdate).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+            }
+
+            loadFuelPricesList();
+        }
+
+        function loadFuelPricesList() {
+            const tbody = document.getElementById('fuel-prices-list');
+            if (!tbody) return;
+
+            const prices = getFuelPrices();
+            const fuelTypesList = ['Diesel S10', 'Diesel Comum', 'Gasolina Comum', 'Gasolina Aditivada', 'Etanol', 'GNV'];
+
+            tbody.innerHTML = fuelTypesList.map(fuel => `
+                <tr>
+                    <td><strong>${fuel}</strong></td>
+                    <td>R$ ${(prices[fuel] || 0).toFixed(2).replace('.', ',')}</td>
+                    <td><span class="status-badge status-completed">Ativo</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // ==================== FUNÇÕES AUXILIARES ====================
+
         function getStatusText(status) {
             const statusMap = {
                 'pending': 'Pendente',
@@ -2263,12 +2360,31 @@
             }
         }
 
-        // Atualizar estatísticas
+        function calculateTotalPrice(fuelType, liters) {
+            if (!fuelType || !liters) return null;
+            const prices = getFuelPrices();
+            const pricePerLiter = prices[fuelType] || 0;
+            return (pricePerLiter * liters).toFixed(2);
+        }
+
+        function calculateTotalPriceModal() {
+            const liters = parseFloat(document.getElementById('edit-liters').value) || 0;
+            const fuelType = document.getElementById('edit-fuel-type').value;
+
+            if (liters > 0 && fuelType) {
+                const totalPrice = calculateTotalPrice(fuelType, liters);
+                document.getElementById('edit-total-price').value = `R$ ${totalPrice}`;
+            } else {
+                document.getElementById('edit-total-price').value = 'R$ 0.00';
+            }
+        }
+
         function updateStats() {
-            let filteredRequests = requests;
+            const allRequests = getAllRequests();
+            let filteredRequests = allRequests;
 
             if (currentRole === 'motorista') {
-                filteredRequests = requests.filter(req => req.driver === 'Motorista Atual');
+                filteredRequests = allRequests.filter(req => req.driver === currentDriverName);
             }
 
             const stats = {
@@ -2287,14 +2403,390 @@
             if (statSigned) statSigned.textContent = stats.signed;
             if (statFueled) statFueled.textContent = stats.fueled;
             if (statCompleted) statCompleted.textContent = stats.completed;
+        }
 
-            const totalElement = document.getElementById('total-requests');
-            if (totalElement) {
-                totalElement.textContent = requests.length;
+        // ==================== AÇÕES DE REQUISIÇÕES ====================
+
+        function newRequest() {
+            document.getElementById('modal-new-request').classList.add('active');
+        }
+
+        function createRequest() {
+            const driver = document.getElementById('new-request-driver').value;
+            const plate = document.getElementById('new-request-plate').value;
+            const vehicleModel = document.getElementById('new-request-vehicle-model').value;
+            const city = document.getElementById('new-request-city').value;
+            const gasStation = document.getElementById('new-request-gas-station').value;
+            const fuelType = document.getElementById('new-request-fuel-type').value;
+            const km = document.getElementById('new-request-km').value;
+            const fuelMethod = document.getElementById('new-request-fuel-method').value;
+            const priority = document.getElementById('new-request-priority').value;
+            const notes = document.getElementById('new-request-notes').value;
+
+            if (!driver || !plate || !city || !gasStation || !fuelType || !km) {
+                showNotification('Por favor, preencha todos os campos obrigatórios!', 'error');
+                return;
+            }
+
+            const allRequests = getAllRequests();
+            const newId = `REQ-2025-${String(allRequests.length + 1).padStart(3, '0')}`;
+            const today = new Date().toISOString().split('T')[0];
+
+            const driverName = currentRole === 'motorista' ? currentDriverName : driver;
+
+            try {
+                // Inserir requisição
+                db.run(`
+                    INSERT INTO requests (id, driver, plate, vehicle, city, gasStation, fuelType, fuelMethod, status, date, supervisor, estimatedValue, realValue, km, priority, notes)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `, [newId, driverName, plate, `${vehicleModel} - ${plate}`, city, gasStation, fuelType, fuelMethod, 'pending', today, 'Pendente', 'A definir', null, parseInt(km), priority, notes || 'Sem observações']);
+
+                // Inserir registro de abastecimento
+                db.run(`
+                    INSERT INTO fuelRecords (requestId, driver, vehicle, gasStation, fuelType, estimatedValue, realValue, liters, status, date, notes)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `, [newId, driverName, `${vehicleModel} - ${plate}`, gasStation, fuelType, 'A definir', null, null, 'pending', today, '']);
+
+                saveDatabase();
+
+                loadRecentActivities();
+                loadAllRequests();
+                loadFuelRecords();
+                updateStats();
+                updateSystemInfo();
+
+                closeModal('modal-new-request');
+                clearForm('new-request');
+
+                showNotification(`Requisição ${newId} criada com sucesso!`, 'success');
+            } catch (error) {
+                console.error('❌ Erro ao criar requisição:', error);
+                showNotification('Erro ao criar requisição: ' + error.message, 'error');
             }
         }
 
-        // Filtros
+        function approveRequest(reqId) {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem aprovar requisições!', 'error');
+                return;
+            }
+
+            try {
+                db.run(`
+                    UPDATE requests
+                    SET status = 'signed', supervisor = ?
+                    WHERE id = ?
+                `, [currentDriverName, reqId]);
+
+                db.run(`
+                    UPDATE fuelRecords
+                    SET status = 'pending'
+                    WHERE requestId = ?
+                `, [reqId]);
+
+                saveDatabase();
+
+                loadRecentActivities();
+                loadAllRequests();
+                loadFuelRecords();
+                updateStats();
+
+                showNotification(`Requisição ${reqId} aprovada com sucesso!`, 'success');
+            } catch (error) {
+                console.error('❌ Erro ao aprovar requisição:', error);
+                showNotification('Erro ao aprovar requisição: ' + error.message, 'error');
+            }
+        }
+
+        function rejectRequest(reqId) {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem rejeitar requisições!', 'error');
+                return;
+            }
+
+            try {
+                db.run(`
+                    UPDATE requests
+                    SET status = 'rejected', supervisor = ?
+                    WHERE id = ?
+                `, [currentDriverName, reqId]);
+
+                saveDatabase();
+
+                loadRecentActivities();
+                loadAllRequests();
+                updateStats();
+
+                showNotification(`Requisição ${reqId} rejeitada!`, 'warning');
+            } catch (error) {
+                console.error('❌ Erro ao rejeitar requisição:', error);
+                showNotification('Erro ao rejeitar requisição: ' + error.message, 'error');
+            }
+        }
+
+        function markAsFueled(reqId) {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem marcar como abastecido!', 'error');
+                return;
+            }
+
+            showScreen('fuel-records');
+            showNotification(`Acesse o registro de abastecimento para finalizar a requisição ${reqId}`, 'warning');
+        }
+
+        function viewRequest(reqId) {
+            const allRequests = getAllRequests();
+            const request = allRequests.find(req => req.id === reqId);
+
+            if (request) {
+                const priorityText = {
+                    'normal': 'Normal',
+                    'urgent': 'Urgente',
+                    'emergency': 'Emergência'
+                };
+
+                const fuelMethodText = {
+                    'tanque': 'Tanque Completo',
+                    'galao': 'Galão'
+                };
+
+                alert(`
+📋 DETALHES DA REQUISIÇÃO ${reqId}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 Motorista: ${request.driver}
+🚚 Veículo: ${request.vehicle}
+🏙️ Cidade: ${request.city || 'N/A'}
+⛽ Posto: ${request.gasStation || 'N/A'}
+🛢️ Combustível: ${request.fuelType || 'N/A'}
+🔧 Tipo de Abastecimento: ${fuelMethodText[request.fuelMethod] || 'N/A'}
+📅 Data: ${formatDate(request.date)}
+👨‍💼 Supervisor: ${request.supervisor}
+💰 Valor Estimado: ${request.estimatedValue || 'N/A'}
+${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
+🛣️ Quilometragem: ${request.km ? request.km.toLocaleString() + ' km' : 'N/A'}
+⚡ Prioridade: ${priorityText[request.priority] || 'N/A'}
+📊 Status: ${getStatusText(request.status)}
+📝 Observações: ${request.notes}
+                `);
+            }
+        }
+
+        function editRealValue(requestId) {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem editar valores!', 'error');
+                return;
+            }
+
+            const fuelRecords = getAllFuelRecords();
+            const record = fuelRecords.find(r => r.requestId === requestId);
+
+            if (!record) {
+                showNotification('Registro não encontrado!', 'error');
+                return;
+            }
+
+            const prices = getFuelPrices();
+
+            document.getElementById('edit-request-id').value = record.requestId;
+            document.getElementById('edit-fuel-type').value = record.fuelType;
+
+            const unitPrice = prices[record.fuelType] || 0;
+            document.getElementById('edit-unit-price').value = `R$ ${unitPrice.toFixed(2)}`;
+
+            document.getElementById('edit-liters').value = record.liters || '';
+            document.getElementById('edit-total-price').value = record.liters ? `R$ ${calculateTotalPrice(record.fuelType, record.liters)}` : 'R$ 0.00';
+            document.getElementById('edit-real-value').value = record.realValue ? record.realValue.replace('R$ ', '').replace(',', '.') : '';
+            document.getElementById('edit-fuel-notes').value = record.notes || '';
+
+            document.getElementById('modal-edit-real-value').classList.add('active');
+        }
+
+        function updateRealValue() {
+            const requestId = document.getElementById('edit-request-id').value;
+            const realValue = document.getElementById('edit-real-value').value;
+            const liters = document.getElementById('edit-liters').value;
+            const notes = document.getElementById('edit-fuel-notes').value;
+
+            if (!realValue || !liters) {
+                showNotification('Por favor, preencha o valor real e a quantidade de litros!', 'error');
+                return;
+            }
+
+            try {
+                const realValueFormatted = `R$ ${parseFloat(realValue).toFixed(2).replace('.', ',')}`;
+
+                db.run(`
+                    UPDATE fuelRecords
+                    SET realValue = ?, liters = ?, notes = ?, status = 'completed'
+                    WHERE requestId = ?
+                `, [realValueFormatted, parseFloat(liters), notes || '', requestId]);
+
+                db.run(`
+                    UPDATE requests
+                    SET status = 'completed', realValue = ?
+                    WHERE id = ?
+                `, [realValueFormatted, requestId]);
+
+                saveDatabase();
+
+                loadRecentActivities();
+                loadAllRequests();
+                loadFuelRecords();
+                updateStats();
+
+                closeModal('modal-edit-real-value');
+
+                showNotification(`Abastecimento ${requestId} finalizado com sucesso!`, 'success');
+            } catch (error) {
+                console.error('❌ Erro ao finalizar abastecimento:', error);
+                showNotification('Erro ao finalizar abastecimento: ' + error.message, 'error');
+            }
+        }
+
+        function viewFuelRecord(requestId) {
+            const fuelRecords = getAllFuelRecords();
+            const record = fuelRecords.find(r => r.requestId === requestId);
+
+            if (record) {
+                const statusText = record.status === 'completed' ? 'Finalizado' : 'Pendente';
+                const prices = getFuelPrices();
+                const pricePerLiter = prices[record.fuelType] || 0;
+                const totalPrice = record.liters ? calculateTotalPrice(record.fuelType, record.liters) : 'N/A';
+
+                alert(`
+⛽ DETALHES DO ABASTECIMENTO ${requestId}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 Motorista: ${record.driver}
+🚚 Veículo: ${record.vehicle}
+⛽ Posto: ${record.gasStation}
+🛢️ Combustível: ${record.fuelType}
+💰 Valor Estimado: ${record.estimatedValue}
+💰 Valor Real: ${record.realValue || 'Não informado'}
+📊 Litros: ${record.liters ? record.liters + ' L' : 'Não informado'}
+💵 Preço Unitário: R$ ${pricePerLiter.toFixed(2)}
+💵 Preço Total Calculado: ${totalPrice !== 'N/A' ? 'R$ ' + totalPrice : 'N/A'}
+📅 Data: ${formatDate(record.date)}
+📊 Status: ${statusText}
+📝 Observações: ${record.notes || 'Sem observações'}
+                `);
+            }
+        }
+
+        // ==================== AÇÕES DE VEÍCULOS ====================
+
+        function newVehicle() {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem cadastrar veículos!', 'error');
+                return;
+            }
+            document.getElementById('modal-new-vehicle').classList.add('active');
+        }
+
+        function createVehicle() {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem cadastrar veículos!', 'error');
+                return;
+            }
+
+            const plate = document.getElementById('new-vehicle-plate').value.toUpperCase();
+            const model = document.getElementById('new-vehicle-model').value;
+            const year = document.getElementById('new-vehicle-year').value;
+            const color = document.getElementById('new-vehicle-color').value;
+            const km = document.getElementById('new-vehicle-km').value;
+            const notes = document.getElementById('new-vehicle-notes').value;
+
+            if (!plate || !model || !year) {
+                showNotification('Por favor, preencha todos os campos obrigatórios!', 'error');
+                return;
+            }
+
+            try {
+                db.run(`
+                    INSERT INTO vehicles (plate, model, year, km, lastFuel, status, color, notes)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                `, [plate, `${model} ${year}`, year, parseInt(km) || 0, 'Nunca', 'Ativo', color || 'Não informada', notes || 'Sem observações']);
+
+                saveDatabase();
+
+                loadVehicles();
+                updateVehiclePlatesSelect();
+
+                closeModal('modal-new-vehicle');
+                clearForm('new-vehicle');
+
+                showNotification(`Veículo ${plate} cadastrado com sucesso!`, 'success');
+            } catch (error) {
+                if (error.message.includes('UNIQUE constraint failed')) {
+                    showNotification('Já existe um veículo cadastrado com essa placa!', 'error');
+                } else {
+                    console.error('❌ Erro ao cadastrar veículo:', error);
+                    showNotification('Erro ao cadastrar veículo: ' + error.message, 'error');
+                }
+            }
+        }
+
+        function viewVehicle(plate) {
+            const vehicles = getAllVehicles();
+            const vehicle = vehicles.find(v => v.plate === plate);
+
+            if (vehicle) {
+                alert(`
+🚚 DETALHES DO VEÍCULO ${plate}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚗 Modelo: ${vehicle.model}
+🎨 Cor: ${vehicle.color}
+🛣️ Quilometragem: ${vehicle.km.toLocaleString()} km
+⛽ Último Abastecimento: ${vehicle.lastFuel !== 'Nunca' ? formatDate(vehicle.lastFuel) : 'Nunca'}
+📊 Status: ${vehicle.status}
+📝 Observações: ${vehicle.notes || 'Sem observações'}
+                `);
+            }
+        }
+
+        function editVehicle(plate) {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem editar veículos!', 'error');
+                return;
+            }
+            showNotification(`Funcionalidade em desenvolvimento - Editar veículo ${plate}`, 'warning');
+        }
+
+        // ==================== PREÇOS DE COMBUSTÍVEIS ====================
+
+        function saveFuelPrices() {
+            if (currentRole !== 'supervisor') {
+                showNotification('Apenas supervisores podem alterar preços!', 'error');
+                return;
+            }
+
+            try {
+                const prices = {
+                    'Diesel S10': parseFloat(document.getElementById('price-diesel-s10').value) || 6.69,
+                    'Diesel Comum': parseFloat(document.getElementById('price-diesel-comum').value) || 6.10,
+                    'Gasolina Comum': parseFloat(document.getElementById('price-gasolina-comum').value) || 6.43,
+                    'Gasolina Aditivada': parseFloat(document.getElementById('price-gasolina-aditivada').value) || 7.18,
+                    'Etanol': parseFloat(document.getElementById('price-etanol').value) || 4.39,
+                    'GNV': parseFloat(document.getElementById('price-gnv').value) || 5.13
+                };
+
+                Object.keys(prices).forEach(fuelType => {
+                    db.run(`
+                        INSERT OR REPLACE INTO fuelPrices (fuelType, price, lastUpdate)
+                        VALUES (?, ?, ?)
+                    `, [fuelType, prices[fuelType], new Date().toISOString()]);
+                });
+
+                saveDatabase();
+                loadFuelPricesList();
+                showNotification('Preços de combustíveis salvos com sucesso!', 'success');
+            } catch (error) {
+                console.error('❌ Erro ao salvar preços:', error);
+                showNotification('Erro ao salvar preços: ' + error.message, 'error');
+            }
+        }
+
+        // ==================== FILTROS ====================
+
         function filterByStatus(status) {
             if (currentRole === 'motorista') return;
 
@@ -2316,7 +2808,8 @@
             const startDate = document.getElementById('filter-start-date')?.value || '';
             const endDate = document.getElementById('filter-end-date')?.value || '';
 
-            let filtered = [...requests];
+            const allRequests = getAllRequests();
+            let filtered = [...allRequests];
 
             if (status) {
                 filtered = filtered.filter(req => req.status === status);
@@ -2350,7 +2843,7 @@
                     <td><span class="status-badge status-${req.status}">${getStatusText(req.status)}</span></td>
                     <td>${formatDate(req.date)}</td>
                     <td>${req.supervisor || 'N/A'}</td>
-                    <td>${req.estimatedValue || req.value || 'N/A'}</td>
+                    <td>${req.estimatedValue || 'N/A'}</td>
                     <td>${req.km ? req.km.toLocaleString() + ' km' : 'N/A'}</td>
                     <td>
                         <button class="btn btn-small" onclick="viewRequest('${req.id}')">👁️</button>
@@ -2368,7 +2861,6 @@
             `).join('');
         }
 
-        // Filtrar registros de abastecimento
         function filterFuelRecords() {
             if (currentRole !== 'supervisor') return;
 
@@ -2377,7 +2869,8 @@
             const startDate = document.getElementById('filter-fuel-start-date')?.value || '';
             const endDate = document.getElementById('filter-fuel-end-date')?.value || '';
 
-            let filtered = [...fuelRecords];
+            const allRecords = getAllFuelRecords();
+            let filtered = [...allRecords];
 
             if (status) {
                 filtered = filtered.filter(record => record.status === status);
@@ -2393,14 +2886,16 @@
             }
 
             const tbody = document.getElementById('fuel-records-list');
+            const prices = getFuelPrices();
+
             if (filtered.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; color: #64748b; padding: 40px;">Nenhum registro encontrado com os filtros aplicados</td></tr>';
                 return;
             }
 
             tbody.innerHTML = filtered.map(record => {
-                const pricePerLiter = fuelPrices[record.fuelType] || 0;
-                const totalPrice = record.liters ? calculateTotalPrice(record.fuelType, record.liters) : 'N/A';
+                const pricePerLiter = prices[record.fuelType] || 0;
+                const totalPrice = record.liters ? (pricePerLiter * record.liters).toFixed(2) : 'N/A';
 
                 return `
                 <tr>
@@ -2426,369 +2921,8 @@
             }).join('');
         }
 
-        // Ações de requisições
-        function newRequest() {
-            document.getElementById('modal-new-request').classList.add('active');
-        }
+        // ==================== RELATÓRIOS ====================
 
-        function createRequest() {
-            const driver = document.getElementById('new-request-driver').value;
-            const plate = document.getElementById('new-request-plate').value;
-            const vehicleModel = document.getElementById('new-request-vehicle-model').value;
-            const city = document.getElementById('new-request-city').value;
-            const gasStation = document.getElementById('new-request-gas-station').value;
-            const fuelType = document.getElementById('new-request-fuel-type').value;
-            const km = document.getElementById('new-request-km').value;
-            const fuelMethod = document.getElementById('new-request-fuel-method').value;
-            const priority = document.getElementById('new-request-priority').value;
-            const notes = document.getElementById('new-request-notes').value;
-
-            if (!driver || !plate || !city || !gasStation || !fuelType || !km) {
-                showNotification('Por favor, preencha todos os campos obrigatórios!', 'error');
-                return;
-            }
-
-            const newId = `REQ-2025-${String(requests.length + 1).padStart(3, '0')}`;
-            const today = new Date().toISOString().split('T')[0];
-
-            const newRequest = {
-                id: newId,
-                driver: currentRole === 'motorista' ? 'Motorista Atual' : driver,
-                plate: plate,
-                vehicle: `${vehicleModel} - ${plate}`,
-                city: city,
-                gasStation: gasStation,
-                fuelType: fuelType,
-                fuelMethod: fuelMethod,
-                status: 'pending',
-                date: today,
-                supervisor: 'Pendente',
-                estimatedValue: 'A definir',
-                realValue: null,
-                km: parseInt(km),
-                priority: priority,
-                notes: notes || 'Sem observações'
-            };
-
-            requests.unshift(newRequest);
-
-            const newFuelRecord = {
-                requestId: newId,
-                driver: newRequest.driver,
-                vehicle: newRequest.vehicle,
-                gasStation: gasStation,
-                fuelType: fuelType,
-                estimatedValue: 'A definir',
-                realValue: null,
-                liters: null,
-                status: 'pending',
-                date: today,
-                notes: ''
-            };
-
-            fuelRecords.unshift(newFuelRecord);
-
-            autoSave();
-            autoBackupToFile(); // ✅ BACKUP AUTOMÁTICO
-
-            loadRecentActivities();
-            loadAllRequests();
-            loadFuelRecords();
-            updateStats();
-
-            closeModal('modal-new-request');
-            clearForm('new-request');
-
-            showNotification(`Requisição ${newId} criada com sucesso!`, 'success');
-        }
-
-        function approveRequest(reqId) {
-            if (currentRole !== 'supervisor') {
-                showNotification('Apenas supervisores podem aprovar requisições!', 'error');
-                return;
-            }
-
-            const request = requests.find(req => req.id === reqId);
-            if (request && request.status === 'pending') {
-                request.status = 'signed';
-                request.supervisor = 'Supervisor';
-
-                const fuelRecord = fuelRecords.find(record => record.requestId === reqId);
-                if (fuelRecord) {
-                    fuelRecord.status = 'pending';
-                }
-
-                autoSave();
-                autoBackupToFile(); // ✅ BACKUP AUTOMÁTICO
-
-                loadRecentActivities();
-                loadAllRequests();
-                loadFuelRecords();
-                updateStats();
-
-                showNotification(`Requisição ${reqId} aprovada com sucesso!`, 'success');
-            }
-        }
-
-        function rejectRequest(reqId) {
-            if (currentRole !== 'supervisor') {
-                showNotification('Apenas supervisores podem rejeitar requisições!', 'error');
-                return;
-            }
-
-            const request = requests.find(req => req.id === reqId);
-            if (request && request.status === 'pending') {
-                request.status = 'rejected';
-                request.supervisor = 'Supervisor';
-
-                autoSave();
-                autoBackupToFile(); // ✅ BACKUP AUTOMÁTICO
-
-                loadRecentActivities();
-                loadAllRequests();
-                updateStats();
-
-                showNotification(`Requisição ${reqId} rejeitada!`, 'warning');
-            }
-        }
-
-        function markAsFueled(reqId) {
-            if (currentRole !== 'supervisor') {
-                showNotification('Apenas supervisores podem marcar como abastecido!', 'error');
-                return;
-            }
-
-            const request = requests.find(req => req.id === reqId);
-            if (request && request.status === 'signed') {
-                showScreen('fuel-records');
-                showNotification(`Acesse o registro de abastecimento para finalizar a requisição ${reqId}`, 'warning');
-            }
-        }
-
-        function viewRequest(reqId) {
-            const request = requests.find(req => req.id === reqId);
-            if (request) {
-                const priorityText = {
-                    'normal': 'Normal',
-                    'urgent': 'Urgente',
-                    'emergency': 'Emergência'
-                };
-
-                const fuelMethodText = {
-                    'tanque': 'Tanque Completo',
-                    'galao': 'Galão'
-                };
-
-                alert(`
-📋 DETALHES DA REQUISIÇÃO ${reqId}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-👤 Motorista: ${request.driver}
-🚚 Veículo: ${request.vehicle}
-🏙️ Cidade: ${request.city || 'N/A'}
-⛽ Posto: ${request.gasStation || 'N/A'}
-🛢️ Combustível: ${request.fuelType || 'N/A'}
-🔧 Tipo de Abastecimento: ${fuelMethodText[request.fuelMethod] || 'N/A'}
-📅 Data: ${formatDate(request.date)}
-👨‍💼 Supervisor: ${request.supervisor}
-💰 Valor Estimado: ${request.estimatedValue || request.value || 'N/A'}
-${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
-🛣️ Quilometragem: ${request.km ? request.km.toLocaleString() + ' km' : 'N/A'}
-⚡ Prioridade: ${priorityText[request.priority] || 'N/A'}
-📊 Status: ${getStatusText(request.status)}
-📝 Observações: ${request.notes}
-                `);
-            }
-        }
-
-        // Editar valor real
-        function editRealValue(requestId) {
-            if (currentRole !== 'supervisor') {
-                showNotification('Apenas supervisores podem editar valores!', 'error');
-                return;
-            }
-
-            const record = fuelRecords.find(r => r.requestId === requestId);
-            if (!record) {
-                showNotification('Registro não encontrado!', 'error');
-                return;
-            }
-
-            document.getElementById('edit-request-id').value = record.requestId;
-            document.getElementById('edit-fuel-type').value = record.fuelType;
-
-            const unitPrice = fuelPrices[record.fuelType] || 0;
-            document.getElementById('edit-unit-price').value = `R$ ${unitPrice.toFixed(2)}`;
-
-            document.getElementById('edit-liters').value = record.liters || '';
-            document.getElementById('edit-total-price').value = record.liters ? `R$ ${calculateTotalPrice(record.fuelType, record.liters)}` : 'R$ 0.00';
-            document.getElementById('edit-real-value').value = record.realValue ? record.realValue.replace('R$ ', '').replace(',', '.') : '';
-            document.getElementById('edit-fuel-notes').value = record.notes || '';
-
-            document.getElementById('modal-edit-real-value').classList.add('active');
-        }
-
-        // Calcular preço total automaticamente
-        function calculateTotalPriceModal() {
-            const liters = parseFloat(document.getElementById('edit-liters').value) || 0;
-            const fuelType = document.getElementById('edit-fuel-type').value;
-
-            if (liters > 0 && fuelType) {
-                const totalPrice = calculateTotalPrice(fuelType, liters);
-                document.getElementById('edit-total-price').value = `R$ ${totalPrice}`;
-            } else {
-                document.getElementById('edit-total-price').value = 'R$ 0.00';
-            }
-        }
-
-        // Atualizar valor real
-        function updateRealValue() {
-            const requestId = document.getElementById('edit-request-id').value;
-            const realValue = document.getElementById('edit-real-value').value;
-            const liters = document.getElementById('edit-liters').value;
-            const notes = document.getElementById('edit-fuel-notes').value;
-
-            if (!realValue || !liters) {
-                showNotification('Por favor, preencha o valor real e a quantidade de litros!', 'error');
-                return;
-            }
-
-            const record = fuelRecords.find(r => r.requestId === requestId);
-            if (record) {
-                record.realValue = `R$ ${parseFloat(realValue).toFixed(2).replace('.', ',')}`;
-                record.liters = parseFloat(liters);
-                record.notes = notes || '';
-                record.status = 'completed';
-            }
-
-            const request = requests.find(req => req.id === requestId);
-            if (request) {
-                request.status = 'completed';
-                request.realValue = record.realValue;
-            }
-
-            autoSave();
-            autoBackupToFile(); // ✅ BACKUP AUTOMÁTICO
-
-            loadRecentActivities();
-            loadAllRequests();
-            loadFuelRecords();
-            updateStats();
-
-            closeModal('modal-edit-real-value');
-
-            showNotification(`Abastecimento ${requestId} finalizado com sucesso!`, 'success');
-        }
-
-        // Visualizar registro de abastecimento
-        function viewFuelRecord(requestId) {
-            const record = fuelRecords.find(r => r.requestId === requestId);
-            if (record) {
-                const statusText = record.status === 'completed' ? 'Finalizado' : 'Pendente';
-
-                const pricePerLiter = fuelPrices[record.fuelType] || 0;
-                const totalPrice = record.liters ? calculateTotalPrice(record.fuelType, record.liters) : 'N/A';
-
-                alert(`
-⛽ DETALHES DO ABASTECIMENTO ${requestId}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-👤 Motorista: ${record.driver}
-🚚 Veículo: ${record.vehicle}
-⛽ Posto: ${record.gasStation}
-🛢️ Combustível: ${record.fuelType}
-💰 Valor Estimado: ${record.estimatedValue}
-💰 Valor Real: ${record.realValue || 'Não informado'}
-📊 Litros: ${record.liters ? record.liters + ' L' : 'Não informado'}
-💵 Preço Unitário: R$ ${pricePerLiter.toFixed(2)}
-💵 Preço Total Calculado: ${totalPrice !== 'N/A' ? 'R$ ' + totalPrice : 'N/A'}
-📅 Data: ${formatDate(record.date)}
-📊 Status: ${statusText}
-📝 Observações: ${record.notes || 'Sem observações'}
-                `);
-            }
-        }
-
-        // Ações de veículos (apenas supervisor)
-        function newVehicle() {
-            if (currentRole !== 'supervisor') {
-                showNotification('Apenas supervisores podem cadastrar veículos!', 'error');
-                return;
-            }
-            document.getElementById('modal-new-vehicle').classList.add('active');
-        }
-
-        function createVehicle() {
-            if (currentRole !== 'supervisor') {
-                showNotification('Apenas supervisores podem cadastrar veículos!', 'error');
-                return;
-            }
-
-            const plate = document.getElementById('new-vehicle-plate').value.toUpperCase();
-            const model = document.getElementById('new-vehicle-model').value;
-            const year = document.getElementById('new-vehicle-year').value;
-            const color = document.getElementById('new-vehicle-color').value;
-            const km = document.getElementById('new-vehicle-km').value;
-            const notes = document.getElementById('new-vehicle-notes').value;
-
-            if (!plate || !model || !year) {
-                showNotification('Por favor, preencha todos os campos obrigatórios!', 'error');
-                return;
-            }
-
-            if (vehicles.find(v => v.plate === plate)) {
-                showNotification('Já existe um veículo cadastrado com essa placa!', 'error');
-                return;
-            }
-
-            const newVehicle = {
-                plate: plate,
-                model: `${model} ${year}`,
-                year: year,
-                km: parseInt(km) || 0,
-                lastFuel: 'Nunca',
-                status: 'Ativo',
-                color: color || 'Não informada',
-                notes: notes || 'Sem observações'
-            };
-
-            vehicles.push(newVehicle);
-
-            autoSave();
-            autoBackupToFile(); // ✅ BACKUP AUTOMÁTICO
-
-            loadVehicles();
-            updateVehiclePlatesSelect();
-
-            closeModal('modal-new-vehicle');
-            clearForm('new-vehicle');
-
-            showNotification(`Veículo ${plate} cadastrado com sucesso!`, 'success');
-        }
-
-        function viewVehicle(plate) {
-            const vehicle = vehicles.find(v => v.plate === plate);
-            if (vehicle) {
-                alert(`
-🚚 DETALHES DO VEÍCULO ${plate}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚗 Modelo: ${vehicle.model}
-🎨 Cor: ${vehicle.color}
-🛣️ Quilometragem: ${vehicle.km.toLocaleString()} km
-⛽ Último Abastecimento: ${vehicle.lastFuel !== 'Nunca' ? formatDate(vehicle.lastFuel) : 'Nunca'}
-📊 Status: ${vehicle.status}
-📝 Observações: ${vehicle.notes || 'Sem observações'}
-                `);
-            }
-        }
-
-        function editVehicle(plate) {
-            if (currentRole !== 'supervisor') {
-                showNotification('Apenas supervisores podem editar veículos!', 'error');
-                return;
-            }
-            showNotification(`Funcionalidade em desenvolvimento - Editar veículo ${plate}`, 'warning');
-        }
-
-        // Relatórios (apenas supervisor)
         function generateReport() {
             if (currentRole !== 'supervisor') return;
 
@@ -2818,7 +2952,20 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
         }
 
         function generateSummaryReport() {
-            const completedRecords = fuelRecords.filter(r => r.status === 'completed');
+            const allRequests = getAllRequests();
+            const allRecords = getAllFuelRecords();
+            const vehicles = getAllVehicles();
+
+            const completedRecords = allRecords.filter(r => r.status === 'completed');
+            const totalLiters = completedRecords.reduce((sum, r) => sum + (r.liters || 0),
+        // ==================== RELATÓRIOS (CONTINUAÇÃO) ====================
+        
+        function generateSummaryReport() {
+            const allRequests = getAllRequests();
+            const allRecords = getAllFuelRecords();
+            const vehicles = getAllVehicles();
+            
+            const completedRecords = allRecords.filter(r => r.status === 'completed');
             const totalLiters = completedRecords.reduce((sum, r) => sum + (r.liters || 0), 0);
             const totalRealValue = completedRecords.reduce((sum, r) => {
                 if (r.realValue) {
@@ -2833,7 +2980,7 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
                     <h3>📊 Resumo Geral - Sistema Atual</h3>
                     <div class="stats-grid" style="margin-top: 20px;">
                         <div class="stat-card completed">
-                            <div class="stat-number">${requests.length}</div>
+                            <div class="stat-number">${allRequests.length}</div>
                             <div class="stat-label">Total de Requisições</div>
                         </div>
                         <div class="stat-card fueled">
@@ -2850,7 +2997,7 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
                         </div>
                     </div>
 
-                    ${requests.length > 0 ? `
+                    ${allRequests.length > 0 ? `
                     <h4 style="margin: 25px 0 15px;">📈 Últimas Requisições</h4>
                     <div class="table-container">
                         <table>
@@ -2864,13 +3011,13 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
                                 </tr>
                             </thead>
                             <tbody>
-                                ${requests.slice(0, 5).map(req => `
+                                ${allRequests.slice(0, 5).map(req => `
                                 <tr>
                                     <td>${req.id}</td>
                                     <td>${req.driver}</td>
                                     <td>${req.vehicle}</td>
                                     <td><span class="status-badge status-${req.status}">${getStatusText(req.status)}</span></td>
-                                    <td>${req.realValue || req.estimatedValue || req.value || 'N/A'}</td>
+                                    <td>${req.realValue || req.estimatedValue || 'N/A'}</td>
                                 </tr>
                                 `).join('')}
                             </tbody>
@@ -2882,7 +3029,8 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
         }
 
         function generateConsumptionReport() {
-            const completedRecords = fuelRecords.filter(r => r.status === 'completed');
+            const allRecords = getAllFuelRecords();
+            const completedRecords = allRecords.filter(r => r.status === 'completed');
 
             if (completedRecords.length === 0) {
                 return `
@@ -2892,6 +3040,8 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
                     </div>
                 `;
             }
+
+            const prices = getFuelPrices();
 
             return `
                 <div class="card" style="margin-top: 20px;">
@@ -2914,7 +3064,7 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
                             <tbody>
                                 ${completedRecords.map(record => {
                                     const value = parseFloat(record.realValue.replace('R$ ', '').replace(',', '.'));
-                                    const pricePerLiter = fuelPrices[record.fuelType] || (value / record.liters);
+                                    const pricePerLiter = prices[record.fuelType] || (value / record.liters);
                                     const totalPrice = calculateTotalPrice(record.fuelType, record.liters);
                                     return `
                                     <tr>
@@ -2938,13 +3088,15 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
         }
 
         function generateCostReport() {
-            const completedRecords = fuelRecords.filter(r => r.status === 'completed');
+            const allRecords = getAllFuelRecords();
+            const completedRecords = allRecords.filter(r => r.status === 'completed');
+            
             const totalReal = completedRecords.reduce((sum, r) => {
                 const value = parseFloat(r.realValue.replace('R$ ', '').replace(',', '.'));
                 return sum + value;
             }, 0);
 
-            const totalEstimated = fuelRecords.reduce((sum, r) => {
+            const totalEstimated = allRecords.reduce((sum, r) => {
                 if (r.estimatedValue === 'A definir') return sum;
                 const value = parseFloat(r.estimatedValue.replace('R$ ', '').replace(',', '.'));
                 return sum + value;
@@ -2979,6 +3131,8 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
         }
 
         function generateEfficiencyReport() {
+            const vehicles = getAllVehicles();
+            
             return `
                 <div class="card" style="margin-top: 20px;">
                     <h3>🔋 Relatório de Eficiência Energética</h3>
@@ -3012,12 +3166,18 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
             `;
         }
 
-        // Exportação para Excel completa
+        // ==================== EXPORTAÇÃO PARA EXCEL ====================
+        
         function exportToExcel(type) {
             if (currentRole !== 'supervisor') {
                 showNotification('Apenas supervisores podem exportar relatórios!', 'error');
                 return;
             }
+
+            const allRequests = getAllRequests();
+            const allRecords = getAllFuelRecords();
+            const vehicles = getAllVehicles();
+            const prices = getFuelPrices();
 
             let workbook = XLSX.utils.book_new();
 
@@ -3025,8 +3185,8 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
                 // Exportar todas as abas
 
                 // Aba 1: Requisições
-                if (requests.length > 0) {
-                    const requestsData = requests.map(req => ({
+                if (allRequests.length > 0) {
+                    const requestsData = allRequests.map(req => ({
                         'ID': req.id,
                         'Motorista': req.driver,
                         'Veículo': req.vehicle,
@@ -3037,7 +3197,7 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
                         'Status': getStatusText(req.status),
                         'Data': req.date,
                         'Supervisor': req.supervisor,
-                        'Valor Estimado': req.estimatedValue || req.value || 'N/A',
+                        'Valor Estimado': req.estimatedValue || 'N/A',
                         'Valor Real': req.realValue || 'N/A',
                         'KM': req.km || 'N/A',
                         'Prioridade': req.priority || 'N/A',
@@ -3049,11 +3209,11 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
                 }
 
                 // Aba 2: Registro de Abastecimento
-                if (fuelRecords.length > 0) {
-                    const fuelData = fuelRecords.map(record => {
+                if (allRecords.length > 0) {
+                    const fuelData = allRecords.map(record => {
                         const liters = record.liters || 0;
                         const fuelType = record.fuelType || '';
-                        const pricePerLiter = fuelPrices[fuelType] || 0;
+                        const pricePerLiter = prices[fuelType] || 0;
                         const totalPrice = liters > 0 ? (pricePerLiter * liters).toFixed(2) : 'N/A';
 
                         return {
@@ -3095,19 +3255,19 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
                 }
 
                 // Aba 4: Preços de Combustíveis
-                const pricesData = Object.keys(fuelPrices)
+                const pricesData = Object.keys(prices)
                     .filter(key => key !== 'lastUpdate')
                     .map(fuelType => ({
                         'Combustível': fuelType,
-                        'Preço (R$/L)': `R$ ${fuelPrices[fuelType].toFixed(2)}`,
-                        'Última Atualização': formatDate(fuelPrices.lastUpdate.split('T')[0])
+                        'Preço (R$/L)': `R$ ${prices[fuelType].toFixed(2)}`,
+                        'Última Atualização': formatDate(prices.lastUpdate.split('T')[0])
                     }));
 
                 const pricesWs = XLSX.utils.json_to_sheet(pricesData);
                 XLSX.utils.book_append_sheet(workbook, pricesWs, "Preços Combustíveis");
 
                 // Aba 5: Relatórios
-                const completedRecords = fuelRecords.filter(r => r.status === 'completed');
+                const completedRecords = allRecords.filter(r => r.status === 'completed');
                 const totalLiters = completedRecords.reduce((sum, r) => sum + (r.liters || 0), 0);
                 const totalRealValue = completedRecords.reduce((sum, r) => {
                     if (r.realValue) {
@@ -3120,27 +3280,27 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
                 const reportData = [
                     {
                         'Indicador': 'Total de Requisições',
-                        'Valor': requests.length,
+                        'Valor': allRequests.length,
                         'Descrição': 'Número total de requisições no sistema'
                     },
                     {
                         'Indicador': 'Requisições Pendentes',
-                        'Valor': requests.filter(req => req.status === 'pending').length,
+                        'Valor': allRequests.filter(req => req.status === 'pending').length,
                         'Descrição': 'Aguardando aprovação do supervisor'
                     },
                     {
                         'Indicador': 'Requisições Aprovadas',
-                        'Valor': requests.filter(req => req.status === 'signed').length,
+                        'Valor': allRequests.filter(req => req.status === 'signed').length,
                         'Descrição': 'Aprovadas para abastecimento'
                     },
                     {
                         'Indicador': 'Abastecimentos Realizados',
-                        'Valor': requests.filter(req => req.status === 'fueled').length,
+                        'Valor': allRequests.filter(req => req.status === 'fueled').length,
                         'Descrição': 'Processos de abastecimento em andamento'
                     },
                     {
                         'Indicador': 'Processos Completos',
-                        'Valor': requests.filter(req => req.status === 'completed').length,
+                        'Valor': allRequests.filter(req => req.status === 'completed').length,
                         'Descrição': 'Abastecimentos finalizados'
                     },
                     {
@@ -3165,10 +3325,10 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
 
             } else if (type === 'fuel-records') {
                 // Exportar apenas registro de abastecimento
-                const fuelData = fuelRecords.map(record => {
+                const fuelData = allRecords.map(record => {
                     const liters = record.liters || 0;
                     const fuelType = record.fuelType || '';
-                    const pricePerLiter = fuelPrices[fuelType] || 0;
+                    const pricePerLiter = prices[fuelType] || 0;
                     const totalPrice = liters > 0 ? (pricePerLiter * liters).toFixed(2) : 'N/A';
 
                     return {
@@ -3226,35 +3386,30 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
             showNotification(`Arquivo ${filename} exportado com sucesso!`, 'success');
         }
 
-        // ==================== FUNÇÕES DE BACKUP MANUAL ====================
-
-        function backupData() {
+        // ==================== CONFIGURAÇÕES E BACKUP ====================
+        
+        function backupDatabase() {
             if (currentRole !== 'supervisor') {
                 showNotification('Apenas supervisores podem fazer backup!', 'error');
                 return;
             }
 
-            const allData = {
-                requests: requests,
-                vehicles: vehicles,
-                fuelRecords: fuelRecords,
-                fuelPrices: fuelPrices,
-                timestamp: new Date().toISOString(),
-                version: 'v2.3.1'
-            };
+            try {
+                const data = db.export();
+                const blob = new Blob([data], {type: 'application/x-sqlite3'});
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `backup_rezende_energia_${new Date().toISOString().split('T')[0]}.db`;
+                link.click();
 
-            const dataStr = JSON.stringify(allData, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(dataBlob);
-            link.download = `backup_rezende_energia_${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-
-            showNotification('Backup gerado e baixado com sucesso!', 'success');
+                showNotification('Backup do banco de dados baixado com sucesso!', 'success');
+            } catch (error) {
+                console.error('❌ Erro ao fazer backup:', error);
+                showNotification('Erro ao fazer backup: ' + error.message, 'error');
+            }
         }
 
-        // Configurações e funcionalidades extras
         function saveSettings() {
             if (currentRole !== 'supervisor') {
                 showNotification('Apenas supervisores podem alterar configurações!', 'error');
@@ -3271,8 +3426,7 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
 
             showNotification('Sincronizando dados...', 'warning');
             setTimeout(() => {
-                autoSave();
-                autoBackupToFile();
+                saveDatabase();
                 showNotification('Dados sincronizados com sucesso!', 'success');
             }, 2000);
         }
@@ -3283,13 +3437,17 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
                 return;
             }
 
-            if (confirm('Tem certeza que deseja limpar o cache? Esta ação não pode ser desfeita.')) {
+            if (confirm('Tem certeza que deseja limpar o cache? Esta ação não pode ser desfeita e o banco de dados será reiniciado.')) {
                 localStorage.clear();
-                showNotification('Cache limpo com sucesso! Recarregue a página.', 'success');
+                showNotification('Cache limpo com sucesso! Recarregue a página para reiniciar o sistema.', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
             }
         }
 
-        // Utilitários
+        // ==================== UTILITÁRIOS ====================
+        
         function closeModal(modalId) {
             document.getElementById(modalId).classList.remove('active');
         }
@@ -3315,7 +3473,8 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
             }, 4000);
         }
 
-        // Atalhos de teclado
+        // ==================== ATALHOS DE TECLADO ====================
+        
         document.addEventListener('keydown', function(e) {
             if (!isLoggedIn) return;
 
@@ -3337,32 +3496,29 @@ ${request.realValue ? `💰 Valor Real: ${request.realValue}` : ''}
         });
 
         // ==================== INICIALIZAÇÃO DO SISTEMA ====================
-        document.addEventListener('DOMContentLoaded', function() {
-            // Verificar suporte ao localStorage PRIMEIRO
-            checkLocalStorageSupport();
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 Iniciando Sistema Rezende Energia v3.0.0 SQLite');
+            
+            // Inicializar banco de dados
+            const dbInitialized = await initDatabase();
+            
+            if (!dbInitialized) {
+                alert('Erro ao inicializar o banco de dados. Por favor, recarregue a página.');
+                return;
+            }
 
-            // Tentar restaurar do backup primeiro
-            restoreFromBackup();
-
-            loadDataFromStorage();
-
-            // Backup automático a cada 30 segundos quando logado
+            // Salvar banco de dados a cada 30 segundos quando logado
             setInterval(() => {
-                if (isLoggedIn) {
-                    autoSave();
-                    autoBackupToFile();
+                if (isLoggedIn && db) {
+                    saveDatabase();
                 }
             }, 30000);
 
-            console.log('🚛 Sistema Rezende Energia v2.3.1 - Pronto para Login');
-            console.log('📊 Sistema de Backup Automático: ✅ Ativado');
-
-            setTimeout(() => {
-                if (!isLoggedIn) {
-                    showNotification('Bem-vindo ao Sistema Rezende Energia! Faça login para começar.', 'success');
-                }
-            }, 1000);
+            console.log('✅ Sistema Rezende Energia pronto para uso!');
+            console.log('🗄️ Banco de dados SQLite inicializado com sucesso!');
         });
+
     </script>
 </body>
 </html>
