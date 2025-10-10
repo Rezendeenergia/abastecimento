@@ -931,7 +931,7 @@
                             <button class="btn btn-secondary" onclick="exportToExcel('requests')" id="export-requests-btn" style="display: none;">Exportar Excel</button>
                         </div>
                     </div>
-                    
+
                     <div class="table-container">
                         <table>
                             <thead>
@@ -965,7 +965,7 @@
                         <div class="card-title">⛽ Registro de Abastecimento</div>
                         <button class="btn btn-secondary" onclick="exportToExcel('fuel-records')">Exportar Excel</button>
                     </div>
-                    
+
                     <div class="table-container">
                         <table>
                             <thead>
@@ -998,7 +998,7 @@
                         <div class="card-title">💰 Preços de Combustíveis</div>
                         <button class="btn" onclick="showUpdatePricesModal()">Atualizar Preços</button>
                     </div>
-                    
+
                     <div class="table-container">
                         <table>
                             <thead>
@@ -1023,7 +1023,7 @@
                         <div class="card-title">🚚 Frota de Veículos</div>
                         <button class="btn btn-secondary" onclick="exportToExcel('vehicles')">Exportar Excel</button>
                     </div>
-                    
+
                     <div class="table-container">
                         <table>
                             <thead>
@@ -1052,7 +1052,7 @@
                         <div class="card-title">📈 Relatórios e Estatísticas</div>
                         <button class="btn" onclick="generateReport()">Gerar Relatório</button>
                     </div>
-                    
+
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Período Inicial:</label>
@@ -1129,7 +1129,7 @@
         <div class="modal-content">
             <span class="modal-close" onclick="closeModal('modal-new-request')">&times;</span>
             <h3 style="margin-bottom: 20px;">📋 Nova Requisição de Abastecimento</h3>
-            
+
             <div class="form-grid">
                 <div class="form-group">
                     <label>Motorista: <span style="color: red;">*</span></label>
@@ -1183,12 +1183,12 @@
                     </select>
                 </div>
             </div>
-            
+
             <div class="form-group">
                 <label>Observações:</label>
                 <textarea id="new-request-notes" rows="3" placeholder="Observações adicionais..."></textarea>
             </div>
-            
+
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button class="btn" onclick="createRequest()" style="flex: 1;">Criar Requisição</button>
                 <button class="btn btn-secondary" onclick="closeModal('modal-new-request')" style="flex: 1;">Cancelar</button>
@@ -1201,11 +1201,11 @@
         <div class="modal-content">
             <span class="modal-close" onclick="closeModal('modal-update-prices')">&times;</span>
             <h3 style="margin-bottom: 20px;">💰 Atualizar Preços de Combustíveis</h3>
-            
+
             <div class="form-grid" id="fuel-prices-form">
                 <!-- Preenchido via JavaScript -->
             </div>
-            
+
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button class="btn" onclick="updateFuelPrices()" style="flex: 1;">Atualizar Preços</button>
                 <button class="btn btn-secondary" onclick="closeModal('modal-update-prices')" style="flex: 1;">Cancelar</button>
@@ -1267,8 +1267,216 @@
 
         // Lista inicial de veículos
         const initialVehicles = [
-            { plate: 'BCQ0937', model: 'F4000', year: '2023', status: 'Ativo', color: 'Branca', km: 0, lastFuel: 'Nunca' },
-            { plate: 'JJB4E57', model: 'CARGO 1217', year: '2002', status: 'Ativo', color: 'Branco', km: 0, lastFuel: 'Nunca' },
+            {
+                plate: 'BCQ0937',
+                model: 'F4000',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branca'
+            },
+            {
+                plate: 'JJB4E57',
+                model: 'CARGO 1217',
+                year: '2002',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'NCF3078',
+                model: 'L200 OUTDOOR',
+                year: '2004',
+                status: 'Ativo',
+                color: 'Prata'
+            },
+            {
+                plate: 'NFW2H74',
+                model: 'CARGO 1317F',
+                year: '2002',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'NRP2E59',
+                model: 'L200 TRITON 3.2 D',
+                year: '2016',
+                status: 'Ativo',
+                color: 'Prata'
+            },
+            {
+                plate: 'OFP1B78',
+                model: '13.190 CRM 4X2',
+                year: '2020',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'OGI3J31',
+                model: 'L200 TRITON 3.2 D',
+                year: '2016',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'OLI7180',
+                model: 'L200 TRITON GLS D',
+                year: '2016',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'PHK5D53',
+                model: 'STRADA FREEDOM CD13',
+                year: '2022',
+                status: 'Ativo',
+                color: 'Prata'
+            },
+            {
+                plate: 'PHL2H91',
+                model: 'S10 LT',
+                year: '2016',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'PHL8286',
+                model: 'STRADA FREEDOM CD13',
+                year: '2014',
+                status: 'Ativo',
+                color: 'Prata'
+            },
+            {
+                plate: 'RXE8A01',
+                model: 'SAVEIRO CS RB MF',
+                year: '2018',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'PVA2J86',
+                model: 'SAVEIRO CS RB MF',
+                year: '2016',
+                status: 'Ativo',
+                color: 'Prata'
+            },
+            {
+                plate: 'SHF6D51',
+                model: 'TECTOR 170E21',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'SHK5E03',
+                model: 'TECTOR 170E21',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'SYN1C01',
+                model: 'TECTOR 170E21',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'TAU9G16',
+                model: '17.210 CRM 4X2',
+                year: '2024',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'TAU9G17',
+                model: '17.210 CRM 4X2',
+                year: '2024',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'TDT0133',
+                model: 'STRADA FREEDOM CD13',
+                year: '2022',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'TDT3G89',
+                model: 'STRADA FREEDOM CD13',
+                year: '2022',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'TDT3H12',
+                model: 'STRADA FREEDOM CD13',
+                year: '2022',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'TDT3H26',
+                model: 'STRADA FREEDOM CD13',
+                year: '2022',
+                status: 'Ativo',
+                color: 'Branco'
+            },
+            {
+                plate: 'CATAMARÃ 1',
+                model: 'CATAMARÃ',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branca'
+            },
+            {
+                plate: 'CATAMARÃ 2',
+                model: 'CATAMARÃ',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branca'
+            },
+            {
+                plate: 'RETROESCAVADEIRA 1',
+                model: 'RETROESCAVADEIRA',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branca'
+            },
+            {
+                plate: 'RETROESCAVADEIRA 2',
+                model: 'RETROESCAVADEIRA',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branca'
+            },
+            {
+                plate: 'RETROESCAVADEIRA 3',
+                model: 'RETROESCAVADEIRA',
+                year: '2023',
+                status: 'Ativo',
+                color: 'Branca'
+            },
+            {
+                plate: 'QZK5H16',
+                model: 'S10 LTZ',
+                year: '2024',
+                status: 'Ativo',
+                color: 'PRETA'
+            },
+            {
+                plate: 'TGM0373',
+                model: 'HILUX SRX',
+                year: '2022',
+                status: 'Ativo',
+                color: 'PRETA'
+            },
+            {
+                plate: 'QVN99H33',
+                model: 'HB20',
+                year: '2022',
+                status: 'Ativo',
+                color: 'BRANCA'
+            }
         ];
 
         // Preços de combustíveis
@@ -1334,7 +1542,7 @@
         function showDriverLogin() {
             const driverSelect = document.getElementById('driver-name');
             driverSelect.innerHTML = '<option value="">Selecione seu nome</option>';
-            
+
             availableDrivers.forEach(driver => {
                 const option = document.createElement('option');
                 option.value = driver;
@@ -1348,7 +1556,7 @@
 
         function loginAsDriver() {
             const selectedDriver = document.getElementById('driver-name').value;
-            
+
             if (!selectedDriver) {
                 showNotification('Por favor, selecione seu nome!', 'error');
                 return;
@@ -1357,7 +1565,7 @@
             currentRole = 'motorista';
             currentDriverName = selectedDriver;
             isLoggedIn = true;
-            
+
             showMainApp();
             showNotification(`Bem-vindo, ${selectedDriver.split(' ')[0]}!`, 'success');
         }
@@ -1405,7 +1613,7 @@
             document.getElementById('supervisor-password').value = '';
             document.getElementById('driver-name').value = '';
             backToRoleSelection();
-            
+
             showNotification('Logout realizado com sucesso!', 'success');
         }
 
@@ -1419,7 +1627,7 @@
             loadAllRequests();
             populateSelects();
             updateStats();
-            
+
             showNotification('Sistema carregado com sucesso!', 'success');
         }
 
@@ -1674,7 +1882,7 @@
                     case 'all':
                         // Criar workbook com múltiplas abas
                         const wb = XLSX.utils.book_new();
-                        
+
                         // Aba de requisições
                         const requestsData = requests.map(req => ({
                             'ID': req.id,
@@ -1885,7 +2093,7 @@
         function loadReportFilters() {
             const driverSelect = document.getElementById('report-driver');
             driverSelect.innerHTML = '<option value="">Todos os motoristas</option>';
-            
+
             const uniqueDrivers = [...new Set(requests.map(req => req.driver))];
             uniqueDrivers.forEach(driver => {
                 const option = document.createElement('option');
@@ -2184,7 +2392,7 @@
             if (fuelRecord && fuelRecord.status === 'signed') {
                 const realValue = prompt('Digite o valor real do abastecimento:');
                 const liters = prompt('Digite a quantidade de litros abastecida:');
-                
+
                 if (realValue && liters) {
                     fuelRecord.realValue = `R$ ${parseFloat(realValue).toFixed(2)}`;
                     fuelRecord.liters = `${parseFloat(liters).toFixed(2)} L`;
