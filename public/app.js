@@ -523,15 +523,8 @@ async function createRequest() {
         return;
     }
 
-    // Calcular valor estimado baseado no preço do combustível
-    let estimatedValue = 'A definir';
-    if (fuelPrices[fuelType]) {
-        const pricePerLiter = fuelPrices[fuelType].price;
-        // Estimativa: tanque médio de 80 litros
-        const estimatedLiters = fuelMethod === 'tanque' ? 80 : 20;
-        const totalEstimated = pricePerLiter * estimatedLiters;
-        estimatedValue = `R$ ${totalEstimated.toFixed(2)}`;
-    }
+    // VALOR ESTIMADO REMOVIDO - será definido pelo supervisor depois
+    const estimatedValue = 'A definir';
 
     const newId = `REQ-${new Date().getFullYear()}-${String(requests.length + 1).padStart(3, '0')}`;
     const today = new Date().toISOString().split('T')[0];
@@ -606,38 +599,42 @@ async function rejectRequest(reqId) {
 }
 
 async function completeFuelRecord(reqId) {
+    // Solicitar apenas litros e preço por litro
     const liters = prompt('Digite a quantidade de litros abastecida:');
+    if (!liters) return;
+
     const pricePerLiter = prompt('Digite o preço por litro (R$):');
+    if (!pricePerLiter) return;
 
-    if (liters && pricePerLiter) {
-        const litersFloat = parseFloat(liters);
-        const priceFloat = parseFloat(pricePerLiter);
-        const totalValue = litersFloat * priceFloat;
+    const litersFloat = parseFloat(liters);
+    const priceFloat = parseFloat(pricePerLiter);
+    
+    // CALCULAR VALOR REAL AUTOMATICAMENTE
+    const totalValue = litersFloat * priceFloat;
 
-        showLoading();
+    showLoading();
 
-        // Atualizar fuel_record
-        await updateData(`/fuel-records/${reqId}`, {
-            liters: `${litersFloat.toFixed(2)} L`,
-            pricePerLiter: priceFloat,
-            realValue: `R$ ${totalValue.toFixed(2)}`,
-            status: 'completed'
-        });
+    // Atualizar fuel_record
+    await updateData(`/fuel-records/${reqId}`, {
+        liters: `${litersFloat.toFixed(2)} L`,
+        pricePerLiter: priceFloat,
+        realValue: `R$ ${totalValue.toFixed(2)}`,
+        status: 'completed'
+    });
 
-        // Atualizar request
-        await updateData(`/requests/${reqId}`, {
-            status: 'completed',
-            supervisor: currentDriverName,
-            realValue: `R$ ${totalValue.toFixed(2)}`,
-            pricePerLiter: priceFloat,
-            liters: `${litersFloat.toFixed(2)} L`
-        });
+    // Atualizar request
+    await updateData(`/requests/${reqId}`, {
+        status: 'completed',
+        supervisor: currentDriverName,
+        realValue: `R$ ${totalValue.toFixed(2)}`,
+        pricePerLiter: priceFloat,
+        liters: `${litersFloat.toFixed(2)} L`
+    });
 
-        hideLoading();
+    hideLoading();
 
-        await loadAllData();
-        showNotification(`✅ Abastecimento ${reqId} registrado! Valor: R$ ${totalValue.toFixed(2)}`, 'success');
-    }
+    await loadAllData();
+    showNotification(`✅ Abastecimento ${reqId} registrado! Valor: R$ ${totalValue.toFixed(2)}`, 'success');
 }
 
 async function editFuelRecord(reqId) {
@@ -648,35 +645,38 @@ async function editFuelRecord(reqId) {
     const currentPrice = fuelRecord.pricePerLiter || 0;
 
     const liters = prompt(`Editar litros:\n(Atual: ${currentLiters.toFixed(2)} L)`, currentLiters);
+    if (!liters) return;
+
     const pricePerLiter = prompt(`Editar preço/litro (R$):\n(Atual: R$ ${currentPrice.toFixed(2)})`, currentPrice);
+    if (!pricePerLiter) return;
 
-    if (liters && pricePerLiter) {
-        const litersFloat = parseFloat(liters);
-        const priceFloat = parseFloat(pricePerLiter);
-        const totalValue = litersFloat * priceFloat;
+    const litersFloat = parseFloat(liters);
+    const priceFloat = parseFloat(pricePerLiter);
+    
+    // CALCULAR NOVO VALOR REAL AUTOMATICAMENTE
+    const totalValue = litersFloat * priceFloat;
 
-        showLoading();
+    showLoading();
 
-        await updateData(`/fuel-records/${reqId}`, {
-            liters: `${litersFloat.toFixed(2)} L`,
-            pricePerLiter: priceFloat,
-            realValue: `R$ ${totalValue.toFixed(2)}`,
-            status: 'completed'
-        });
+    await updateData(`/fuel-records/${reqId}`, {
+        liters: `${litersFloat.toFixed(2)} L`,
+        pricePerLiter: priceFloat,
+        realValue: `R$ ${totalValue.toFixed(2)}`,
+        status: 'completed'
+    });
 
-        await updateData(`/requests/${reqId}`, {
-            status: 'completed',
-            supervisor: currentDriverName,
-            realValue: `R$ ${totalValue.toFixed(2)}`,
-            pricePerLiter: priceFloat,
-            liters: `${litersFloat.toFixed(2)} L`
-        });
+    await updateData(`/requests/${reqId}`, {
+        status: 'completed',
+        supervisor: currentDriverName,
+        realValue: `R$ ${totalValue.toFixed(2)}`,
+        pricePerLiter: priceFloat,
+        liters: `${litersFloat.toFixed(2)} L`
+    });
 
-        hideLoading();
+    hideLoading();
 
-        await loadAllData();
-        showNotification(`✅ Registro ${reqId} atualizado! Novo valor: R$ ${totalValue.toFixed(2)}`, 'success');
-    }
+    await loadAllData();
+    showNotification(`✅ Registro ${reqId} atualizado! Novo valor: R$ ${totalValue.toFixed(2)}`, 'success');
 }
 
 // ==================== FUNÇÕES DE VEÍCULOS ====================
@@ -895,11 +895,6 @@ async function updateFuelPrices() {
         await loadAllData();
         closeModal('modal-update-prices');
         showNotification('✅ Preços atualizados com sucesso!', 'success');
-
-        // Recalcular valores estimados para cada combustível alterado
-        for (const [fuelType, newPrice] of Object.entries(updatedPrices)) {
-            await recalculateEstimatedValues(fuelType, newPrice);
-        }
     }
 }
 
@@ -926,41 +921,7 @@ async function editFuelPrice(fuelType, currentPrice) {
     if (result) {
         await loadAllData();
         showNotification(`✅ Preço de ${fuelType} atualizado para R$ ${priceFloat.toFixed(2)}!`, 'success');
-
-        // Atualizar valores estimados das requisições pendentes
-        await recalculateEstimatedValues(fuelType, priceFloat);
     }
-}
-
-async function recalculateEstimatedValues(fuelType, newPrice) {
-    // Buscar requisições pendentes com este tipo de combustível
-    const pendingRequests = requests.filter(req =>
-        req.fuelType === fuelType &&
-        (req.status === 'pending' || req.status === 'signed')
-    );
-
-    if (pendingRequests.length === 0) return;
-
-    showLoading();
-
-    for (const req of pendingRequests) {
-        // Estimativa: tanque médio de 80 litros ou galão de 20 litros
-        const estimatedLiters = req.fuelMethod === 'tanque' ? 80 : 20;
-        const totalEstimated = newPrice * estimatedLiters;
-        const newEstimatedValue = `R$ ${totalEstimated.toFixed(2)}`;
-
-        // Atualizar apenas o valor estimado
-        await updateData(`/requests/${req.id}`, {
-            status: req.status,
-            supervisor: req.supervisor,
-            estimatedValue: newEstimatedValue
-        });
-    }
-
-    hideLoading();
-    await loadAllData();
-
-    showNotification(`📊 ${pendingRequests.length} requisição(ões) tiveram o valor estimado recalculado!`, 'success');
 }
 
 // ==================== FUNÇÕES DE VISUALIZAÇÃO ====================
@@ -988,12 +949,15 @@ function loadRecentActivities() {
             <td>${req.city || 'N/A'}</td>
             <td><span class="status-badge status-${req.status}">${getStatusText(req.status)}</span></td>
             <td>${formatDate(req.date)}</td>
-            <td>${req.estimatedValue || 'N/A'}</td>
+            <td>${req.realValue || req.estimatedValue || 'A definir'}</td>
             <td>
                 <button class="btn btn-small" onclick="viewRequest('${req.id}')">👁️</button>
                 ${currentRole === 'supervisor' && req.status === 'pending' ? `
                     <button class="btn btn-small btn-success" onclick="approveRequest('${req.id}')">✅</button>
                     <button class="btn btn-small btn-danger" onclick="rejectRequest('${req.id}')">❌</button>
+                ` : ''}
+                ${currentRole === 'supervisor' && req.status === 'signed' ? `
+                    <button class="btn btn-small btn-success" onclick="completeFuelRecord('${req.id}')">⛽</button>
                 ` : ''}
             </td>
         </tr>
@@ -1026,13 +990,16 @@ function loadAllRequests() {
             <td><span class="status-badge status-${req.status}">${getStatusText(req.status)}</span></td>
             <td>${formatDate(req.date)}</td>
             <td>${req.supervisor || 'N/A'}</td>
-            <td>${req.estimatedValue || 'N/A'}</td>
+            <td>${req.realValue || req.estimatedValue || 'A definir'}</td>
             <td>${req.km ? req.km.toLocaleString() + ' km' : 'N/A'}</td>
             <td>
                 <button class="btn btn-small" onclick="viewRequest('${req.id}')">👁️</button>
                 ${currentRole === 'supervisor' && req.status === 'pending' ? `
                     <button class="btn btn-small btn-success" onclick="approveRequest('${req.id}')">✅</button>
                     <button class="btn btn-small btn-danger" onclick="rejectRequest('${req.id}')">❌</button>
+                ` : ''}
+                ${currentRole === 'supervisor' && req.status === 'signed' ? `
+                    <button class="btn btn-small btn-success" onclick="completeFuelRecord('${req.id}')">⛽</button>
                 ` : ''}
             </td>
         </tr>
@@ -1077,7 +1044,7 @@ function loadFuelRecords() {
             <td>
                 <button class="btn btn-small" onclick="viewFuelRecord('${record.requestId}')">👁️</button>
                 ${record.status === 'signed' ? `
-                    <button class="btn btn-small btn-success" onclick="completeFuelRecord('${record.requestId}')">✅</button>
+                    <button class="btn btn-small btn-success" onclick="completeFuelRecord('${record.requestId}')">⛽</button>
                 ` : ''}
                 ${record.status === 'completed' ? `
                     <button class="btn btn-small btn-warning" onclick="editFuelRecord('${record.requestId}')">✏️</button>
@@ -1171,7 +1138,7 @@ function generateReport() {
             <td>${req.fuelType || 'N/A'}</td>
             <td><span class="status-badge status-${req.status}">${getStatusText(req.status)}</span></td>
             <td>${formatDate(req.date)}</td>
-            <td>${req.estimatedValue || 'N/A'}</td>
+            <td>${req.realValue || req.estimatedValue || 'A definir'}</td>
         </tr>
     `).join('');
 
@@ -1337,7 +1304,6 @@ function viewRequest(reqId) {
 🔧 Tipo: ${fuelMethodText[request.fuelMethod] || 'N/A'}
 📅 Data: ${formatDate(request.date)}
 👨‍💼 Supervisor: ${request.supervisor}
-💰 Valor Estimado: ${request.estimatedValue || 'N/A'}
 ${priceInfo}${litersInfo}${realValueInfo}🛣️ KM: ${request.km ? request.km.toLocaleString() + ' km' : 'N/A'}
 ⚡ Prioridade: ${priorityText[request.priority] || 'N/A'}
 📊 Status: ${getStatusText(request.status)}
@@ -1360,7 +1326,6 @@ function viewFuelRecord(reqId) {
 🚚 Veículo: ${record.vehicle}
 ⛽ Posto: ${record.gasStation}
 🛢️ Combustível: ${record.fuelType}
-💰 Valor Estimado: ${record.estimatedValue}
 ${priceInfo}${litersInfo}${realValueInfo}📊 Status: ${getStatusText(record.status)}
 📅 Data: ${formatDate(record.date)}
 ${record.notes ? `📝 Observações: ${record.notes}` : ''}
@@ -1446,10 +1411,9 @@ function exportToExcel(type) {
                     'Status': getStatusText(req.status),
                     'Data': formatDate(req.date),
                     'Supervisor': req.supervisor,
-                    'Valor Estimado': req.estimatedValue,
+                    'Valor Real': req.realValue || 'A definir',
                     'Preço por Litro': req.pricePerLiter ? `R$ ${req.pricePerLiter.toFixed(2)}` : 'N/A',
                     'Litros': req.liters || 'N/A',
-                    'Valor Real': req.realValue || 'N/A',
                     'KM': req.km,
                     'Prioridade': req.priority,
                     'Observações': req.notes
@@ -1464,7 +1428,6 @@ function exportToExcel(type) {
                     'Veículo': record.vehicle,
                     'Posto': record.gasStation,
                     'Combustível': record.fuelType,
-                    'Valor Estimado': record.estimatedValue,
                     'Preço por Litro': record.pricePerLiter ? `R$ ${record.pricePerLiter.toFixed(2)}` : 'N/A',
                     'Litros': record.liters || 'N/A',
                     'Valor Real': record.realValue || 'N/A',
@@ -1501,10 +1464,9 @@ function exportToExcel(type) {
                     'Status': getStatusText(req.status),
                     'Data': formatDate(req.date),
                     'Supervisor': req.supervisor,
-                    'Valor Estimado': req.estimatedValue,
+                    'Valor Real': req.realValue || 'A definir',
                     'Preço por Litro': req.pricePerLiter ? `R$ ${req.pricePerLiter.toFixed(2)}` : 'N/A',
                     'Litros': req.liters || 'N/A',
-                    'Valor Real': req.realValue || 'N/A',
                     'KM': req.km,
                     'Prioridade': req.priority,
                     'Observações': req.notes
@@ -1518,7 +1480,6 @@ function exportToExcel(type) {
                     'Veículo': record.vehicle,
                     'Posto': record.gasStation,
                     'Combustível': record.fuelType,
-                    'Valor Estimado': record.estimatedValue,
                     'Preço por Litro': record.pricePerLiter ? `R$ ${record.pricePerLiter.toFixed(2)}` : 'N/A',
                     'Litros': record.liters || 'N/A',
                     'Valor Real': record.realValue || 'N/A',
