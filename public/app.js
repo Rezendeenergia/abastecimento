@@ -599,25 +599,46 @@ async function rejectRequest(reqId) {
 }
 
 async function completeFuelRecord(reqId) {
-    // Solicitar apenas litros e preço por litro
-    const liters = prompt('Digite a quantidade de litros abastecida:');
+    const request = requests.find(req => req.id === reqId);
+    if (!request) {
+        showNotification('Requisição não encontrada!', 'error');
+        return;
+    }
+
+    // PEGAR PREÇO AUTOMATICAMENTE DA TABELA DE PREÇOS
+    const fuelType = request.fuelType;
+    const pricePerLiter = fuelPrices[fuelType] ? fuelPrices[fuelType].price : null;
+
+    if (!pricePerLiter) {
+        showNotification(`Preço do ${fuelType} não cadastrado! Atualize os preços primeiro.`, 'error');
+        return;
+    }
+
+    // MOSTRAR PREÇO AUTOMÁTICO AO SUPERVISOR
+    const liters = prompt(
+        `Registrar abastecimento para ${fuelType}\n\n` +
+        `Preço por litro: R$ ${pricePerLiter.toFixed(2)}\n` +
+        `Digite a quantidade de litros abastecida:`
+    );
+
     if (!liters) return;
 
-    const pricePerLiter = prompt('Digite o preço por litro (R$):');
-    if (!pricePerLiter) return;
-
     const litersFloat = parseFloat(liters);
-    const priceFloat = parseFloat(pricePerLiter);
     
+    if (isNaN(litersFloat) || litersFloat <= 0) {
+        showNotification('Quantidade de litros inválida!', 'error');
+        return;
+    }
+
     // CALCULAR VALOR REAL AUTOMATICAMENTE
-    const totalValue = litersFloat * priceFloat;
+    const totalValue = litersFloat * pricePerLiter;
 
     showLoading();
 
     // Atualizar fuel_record
     await updateData(`/fuel-records/${reqId}`, {
         liters: `${litersFloat.toFixed(2)} L`,
-        pricePerLiter: priceFloat,
+        pricePerLiter: pricePerLiter,
         realValue: `R$ ${totalValue.toFixed(2)}`,
         status: 'completed'
     });
@@ -627,40 +648,65 @@ async function completeFuelRecord(reqId) {
         status: 'completed',
         supervisor: currentDriverName,
         realValue: `R$ ${totalValue.toFixed(2)}`,
-        pricePerLiter: priceFloat,
+        pricePerLiter: pricePerLiter,
         liters: `${litersFloat.toFixed(2)} L`
     });
 
     hideLoading();
 
     await loadAllData();
-    showNotification(`✅ Abastecimento ${reqId} registrado! Valor: R$ ${totalValue.toFixed(2)}`, 'success');
+    showNotification(
+        `✅ Abastecimento ${reqId} registrado!\n` +
+        `Litros: ${litersFloat.toFixed(2)} L\n` +
+        `Preço/L: R$ ${pricePerLiter.toFixed(2)}\n` +
+        `Valor Total: R$ ${totalValue.toFixed(2)}`, 
+        'success'
+    );
 }
 
 async function editFuelRecord(reqId) {
     const fuelRecord = fuelRecords.find(record => record.requestId === reqId);
     if (!fuelRecord || fuelRecord.status !== 'completed') return;
 
-    const currentLiters = fuelRecord.liters ? parseFloat(fuelRecord.liters.replace(' L', '')) : 0;
-    const currentPrice = fuelRecord.pricePerLiter || 0;
+    const request = requests.find(req => req.id === reqId);
+    if (!request) return;
 
-    const liters = prompt(`Editar litros:\n(Atual: ${currentLiters.toFixed(2)} L)`, currentLiters);
+    // PEGAR PREÇO AUTOMATICAMENTE DA TABELA DE PREÇOS
+    const fuelType = request.fuelType;
+    const pricePerLiter = fuelPrices[fuelType] ? fuelPrices[fuelType].price : null;
+
+    if (!pricePerLiter) {
+        showNotification(`Preço do ${fuelType} não cadastrado! Atualize os preços primeiro.`, 'error');
+        return;
+    }
+
+    const currentLiters = fuelRecord.liters ? parseFloat(fuelRecord.liters.replace(' L', '')) : 0;
+
+    // MOSTRAR PREÇO AUTOMÁTICO AO SUPERVISOR
+    const liters = prompt(
+        `Editar abastecimento para ${fuelType}\n\n` +
+        `Preço por litro: R$ ${pricePerLiter.toFixed(2)}\n` +
+        `Digite a nova quantidade de litros:\n(Atual: ${currentLiters.toFixed(2)} L)`, 
+        currentLiters
+    );
+
     if (!liters) return;
 
-    const pricePerLiter = prompt(`Editar preço/litro (R$):\n(Atual: R$ ${currentPrice.toFixed(2)})`, currentPrice);
-    if (!pricePerLiter) return;
-
     const litersFloat = parseFloat(liters);
-    const priceFloat = parseFloat(pricePerLiter);
     
+    if (isNaN(litersFloat) || litersFloat <= 0) {
+        showNotification('Quantidade de litros inválida!', 'error');
+        return;
+    }
+
     // CALCULAR NOVO VALOR REAL AUTOMATICAMENTE
-    const totalValue = litersFloat * priceFloat;
+    const totalValue = litersFloat * pricePerLiter;
 
     showLoading();
 
     await updateData(`/fuel-records/${reqId}`, {
         liters: `${litersFloat.toFixed(2)} L`,
-        pricePerLiter: priceFloat,
+        pricePerLiter: pricePerLiter,
         realValue: `R$ ${totalValue.toFixed(2)}`,
         status: 'completed'
     });
@@ -669,14 +715,20 @@ async function editFuelRecord(reqId) {
         status: 'completed',
         supervisor: currentDriverName,
         realValue: `R$ ${totalValue.toFixed(2)}`,
-        pricePerLiter: priceFloat,
+        pricePerLiter: pricePerLiter,
         liters: `${litersFloat.toFixed(2)} L`
     });
 
     hideLoading();
 
     await loadAllData();
-    showNotification(`✅ Registro ${reqId} atualizado! Novo valor: R$ ${totalValue.toFixed(2)}`, 'success');
+    showNotification(
+        `✅ Registro ${reqId} atualizado!\n` +
+        `Novos litros: ${litersFloat.toFixed(2)} L\n` +
+        `Preço/L: R$ ${pricePerLiter.toFixed(2)}\n` +
+        `Novo Valor: R$ ${totalValue.toFixed(2)}`, 
+        'success'
+    );
 }
 
 // ==================== FUNÇÕES DE VEÍCULOS ====================
