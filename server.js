@@ -80,23 +80,21 @@ function initDatabase() {
         lastUpdate TEXT
     )`);
 
-    // Inserir veículos iniciais se não existirem
-    db.get('SELECT COUNT(*) as count FROM vehicles', [], (err, row) => {
-        if (row && row.count === 0) {
-            insertInitialVehicles();
-        }
-    });
+    // SEMPRE inserir veículos iniciais (Render recria o banco)
+    setTimeout(() => {
+        insertInitialVehicles();
+    }, 1000);
 
-    // Inserir preços iniciais se não existirem
-    db.get('SELECT COUNT(*) as count FROM fuel_prices', [], (err, row) => {
-        if (row && row.count === 0) {
-            insertInitialPrices();
-        }
-    });
+    // SEMPRE inserir preços iniciais
+    setTimeout(() => {
+        insertInitialPrices();
+    }, 2000);
 }
 
-// Inserir veículos iniciais
+// Inserir veículos iniciais - SEMPRE executar
 function insertInitialVehicles() {
+    console.log('🔄 Inserindo veículos iniciais...');
+    
     const vehicles = [
         ['BCQ0937', 'F4000', '2023', 'Ativo', 'Branca', 0, 'Nunca'],
         ['JJB4E57', 'CARGO 1217', '2002', 'Ativo', 'Branco', 0, 'Nunca'],
@@ -130,14 +128,41 @@ function insertInitialVehicles() {
         ['QVN99H33', 'HB20', '2022', 'Ativo', 'BRANCA', 0, 'Nunca']
     ];
 
-    const stmt = db.prepare('INSERT INTO vehicles VALUES (?, ?, ?, ?, ?, ?, ?)');
-    vehicles.forEach(v => stmt.run(v));
-    stmt.finalize();
-    console.log('✅ Veículos iniciais inseridos');
+    // Primeiro limpar a tabela para evitar duplicatas
+    db.run('DELETE FROM vehicles', (err) => {
+        if (err) {
+            console.error('Erro ao limpar veículos:', err);
+        } else {
+            console.log('✅ Tabela de veículos limpa');
+            
+            // Inserir todos os veículos
+            const stmt = db.prepare('INSERT OR REPLACE INTO vehicles VALUES (?, ?, ?, ?, ?, ?, ?)');
+            
+            let insertedCount = 0;
+            vehicles.forEach((vehicle) => {
+                stmt.run(vehicle, (err) => {
+                    if (err) {
+                        console.error(`❌ Erro ao inserir veículo ${vehicle[0]}:`, err);
+                    } else {
+                        insertedCount++;
+                        console.log(`✅ Veículo ${vehicle[0]} inserido`);
+                    }
+                    
+                    // Finalizar após o último veículo
+                    if (insertedCount === vehicles.length) {
+                        stmt.finalize();
+                        console.log(`🎉 ${vehicles.length} veículos inseridos com sucesso!`);
+                    }
+                });
+            });
+        }
+    });
 }
 
-// Inserir preços iniciais
+// Inserir preços iniciais - SEMPRE executar
 function insertInitialPrices() {
+    console.log('🔄 Inserindo preços iniciais...');
+    
     const prices = [
         ['Diesel S10', 6.69],
         ['Diesel Comum', 6.10],
@@ -148,10 +173,35 @@ function insertInitialPrices() {
     ];
 
     const now = new Date().toISOString();
-    const stmt = db.prepare('INSERT INTO fuel_prices VALUES (?, ?, ?)');
-    prices.forEach(p => stmt.run(p[0], p[1], now));
-    stmt.finalize();
-    console.log('✅ Preços iniciais inseridos');
+    
+    // Limpar tabela de preços
+    db.run('DELETE FROM fuel_prices', (err) => {
+        if (err) {
+            console.error('Erro ao limpar preços:', err);
+        } else {
+            console.log('✅ Tabela de preços limpa');
+            
+            const stmt = db.prepare('INSERT OR REPLACE INTO fuel_prices VALUES (?, ?, ?)');
+            
+            let insertedCount = 0;
+            prices.forEach((price) => {
+                stmt.run(price[0], price[1], now, (err) => {
+                    if (err) {
+                        console.error(`❌ Erro ao inserir preço ${price[0]}:`, err);
+                    } else {
+                        insertedCount++;
+                        console.log(`✅ Preço ${price[0]} inserido: R$ ${price[1]}`);
+                    }
+                    
+                    // Finalizar após o último preço
+                    if (insertedCount === prices.length) {
+                        stmt.finalize();
+                        console.log(`🎉 ${prices.length} preços inseridos com sucesso!`);
+                    }
+                });
+            });
+        }
+    });
 }
 
 // ==================== ROTAS API ====================
@@ -344,6 +394,13 @@ app.get('/health', (req, res) => {
     });
 });
 
+// Rota para forçar recriação dos dados iniciais
+app.post('/api/reset-data', (req, res) => {
+    insertInitialVehicles();
+    insertInitialPrices();
+    res.json({ success: true, message: 'Dados iniciais recriados' });
+});
+
 // Iniciar servidor
 app.listen(PORT, () => {
     console.log(`
@@ -352,6 +409,8 @@ app.listen(PORT, () => {
 ========================================
    🌐 Servidor rodando em: http://localhost:${PORT}
    💾 Banco de dados: SQLite (rezende_energia.db)
+   🚗 Veículos: 30 cadastrados automaticamente
+   ⛽ Preços: 6 combustíveis cadastrados
    ✅ Sistema pronto para uso!
 ========================================
     `);
