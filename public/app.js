@@ -460,7 +460,7 @@ function updateVehiclePlatesSelect() {
     activeVehicles.forEach(vehicle => {
         const option = document.createElement('option');
         option.value = vehicle.plate;
-        option.textContent = `${vehicle.plate} - ${vehicle.model}`;
+        option.textContent = vehicle.plate; // APENAS A PLACA
         option.setAttribute('data-model', vehicle.model);
         plateSelect.appendChild(option);
     });
@@ -480,9 +480,19 @@ function updateVehicleModel() {
     const modelInput = document.getElementById('new-request-vehicle-model');
 
     if (plateSelect && modelInput) {
-        const selectedOption = plateSelect.options[plateSelect.selectedIndex];
-        if (selectedOption && selectedOption.getAttribute('data-model')) {
-            modelInput.value = selectedOption.getAttribute('data-model');
+        const selectedPlate = plateSelect.value;
+        
+        if (selectedPlate) {
+            // Buscar o veículo pela placa selecionada
+            const selectedVehicle = vehicles.find(vehicle => vehicle.plate === selectedPlate);
+            
+            if (selectedVehicle) {
+                modelInput.value = selectedVehicle.model;
+                console.log(`✅ Modelo carregado: ${selectedVehicle.model} para placa ${selectedPlate}`);
+            } else {
+                modelInput.value = '';
+                console.warn(`⚠️ Veículo não encontrado para placa: ${selectedPlate}`);
+            }
         } else {
             modelInput.value = '';
         }
@@ -504,6 +514,12 @@ async function createRequest() {
 
     if (!plate || !city || !gasStation || !fuelType || !km) {
         showNotification('Por favor, preencha todos os campos obrigatórios!', 'error');
+        return;
+    }
+
+    // Verificar se o modelo foi carregado
+    if (!vehicleModel) {
+        showNotification('Por favor, selecione uma placa válida para carregar o modelo do veículo!', 'error');
         return;
     }
 
