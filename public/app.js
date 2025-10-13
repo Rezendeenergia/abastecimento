@@ -349,6 +349,146 @@ function setupUserInterface() {
     }
 }
 
+// ==================== FUNÇÕES DE POPULAR SELECTS ====================
+
+function populateSelects() {
+    console.log('🔄 Populando selects...');
+    
+    // Popular cidade
+    const citySelect = document.getElementById('new-request-city');
+    if (citySelect) {
+        citySelect.innerHTML = '<option value="">Selecione uma cidade</option>';
+        cities.forEach(city => {
+            const option = document.createElement('option');
+            option.value = city;
+            option.textContent = city;
+            citySelect.appendChild(option);
+        });
+        console.log(`✅ Cidades carregadas: ${cities.length}`);
+    }
+
+    // Popular postos
+    const stationSelect = document.getElementById('new-request-gas-station');
+    if (stationSelect) {
+        stationSelect.innerHTML = '<option value="">Selecione um posto</option>';
+        gasStations.forEach(station => {
+            const option = document.createElement('option');
+            option.value = station;
+            option.textContent = station;
+            stationSelect.appendChild(option);
+        });
+        console.log(`✅ Postos carregados: ${gasStations.length}`);
+    }
+
+    // Popular combustíveis
+    const fuelSelect = document.getElementById('new-request-fuel-type');
+    if (fuelSelect) {
+        fuelSelect.innerHTML = '<option value="">Selecione o combustível</option>';
+        fuelTypes.forEach(fuel => {
+            const option = document.createElement('option');
+            option.value = fuel;
+            option.textContent = fuel;
+            fuelSelect.appendChild(option);
+        });
+        console.log(`✅ Combustíveis carregados: ${fuelTypes.length}`);
+    }
+
+    // Popular prioridade
+    const prioritySelect = document.getElementById('new-request-priority');
+    if (prioritySelect) {
+        prioritySelect.innerHTML = `
+            <option value="normal">Normal</option>
+            <option value="urgent">Urgente</option>
+            <option value="emergency">Emergência</option>
+        `;
+    }
+
+    // Popular método de abastecimento
+    const fuelMethodSelect = document.getElementById('new-request-fuel-method');
+    if (fuelMethodSelect) {
+        fuelMethodSelect.innerHTML = `
+            <option value="tanque">Tanque Completo</option>
+            <option value="galao">Galão</option>
+        `;
+    }
+
+    updateVehiclePlatesSelect();
+    updateDriverName();
+    
+    console.log('✅ Todos os selects populados');
+}
+
+function updateVehiclePlatesSelect() {
+    const plateSelect = document.getElementById('new-request-plate');
+    if (!plateSelect) {
+        console.error('❌ Elemento new-request-plate não encontrado');
+        return;
+    }
+
+    console.log('🔄 Atualizando select de placas...');
+    console.log('📊 Veículos disponíveis:', vehicles);
+
+    plateSelect.innerHTML = '<option value="">Selecione uma placa</option>';
+
+    if (!Array.isArray(vehicles) || vehicles.length === 0) {
+        console.warn('⚠️ Nenhum veículo disponível para popular select');
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Nenhum veículo cadastrado';
+        option.disabled = true;
+        plateSelect.appendChild(option);
+        return;
+    }
+
+    // Filtrar apenas veículos ativos para requisições
+    const activeVehicles = vehicles.filter(vehicle => 
+        vehicle.status === 'Ativo' || vehicle.status === 'ativo'
+    );
+
+    console.log(`🚗 Veículos ativos: ${activeVehicles.length}`);
+
+    if (activeVehicles.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Nenhum veículo ativo disponível';
+        option.disabled = true;
+        plateSelect.appendChild(option);
+        console.warn('⚠️ Nenhum veículo ativo encontrado');
+        return;
+    }
+
+    activeVehicles.forEach(vehicle => {
+        const option = document.createElement('option');
+        option.value = vehicle.plate;
+        option.textContent = `${vehicle.plate} - ${vehicle.model}`;
+        option.setAttribute('data-model', vehicle.model);
+        plateSelect.appendChild(option);
+    });
+
+    console.log(`✅ ${activeVehicles.length} placas ativas adicionadas ao select`);
+}
+
+function updateDriverName() {
+    const driverInput = document.getElementById('new-request-driver');
+    if (driverInput) {
+        driverInput.value = currentDriverName;
+    }
+}
+
+function updateVehicleModel() {
+    const plateSelect = document.getElementById('new-request-plate');
+    const modelInput = document.getElementById('new-request-vehicle-model');
+
+    if (plateSelect && modelInput) {
+        const selectedOption = plateSelect.options[plateSelect.selectedIndex];
+        if (selectedOption && selectedOption.getAttribute('data-model')) {
+            modelInput.value = selectedOption.getAttribute('data-model');
+        } else {
+            modelInput.value = '';
+        }
+    }
+}
+
 // ==================== FUNÇÕES DE REQUISIÇÕES ====================
 
 async function createRequest() {
@@ -639,6 +779,174 @@ async function deleteVehicle(plate) {
     }
 }
 
+// ==================== FUNÇÕES DE PREÇOS DE COMBUSTÍVEL ====================
+
+function loadFuelPrices() {
+    const tbody = document.getElementById('fuel-prices-table');
+    if (!tbody) {
+        console.warn('Tabela fuel-prices-table não encontrada');
+        return;
+    }
+
+    console.log('🔄 Carregando preços de combustível:', fuelPrices);
+
+    if (!fuelPrices || Object.keys(fuelPrices).length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" style="text-align: center; color: #64748b; padding: 40px;">
+                    Nenhum preço cadastrado. Clique em "Atualizar Preços" para adicionar.
+                </td>
+            </tr>
+        `;
+        console.warn('⚠️ Nenhum preço de combustível encontrado');
+        return;
+    }
+
+    tbody.innerHTML = Object.entries(fuelPrices).map(([fuelType, data]) => {
+        const lastUpdate = data.lastUpdate ? formatDate(data.lastUpdate) : 'Nunca';
+        return `
+            <tr>
+                <td><strong>${fuelType}</strong></td>
+                <td id="price-display-${fuelType.replace(/\s+/g, '-')}">R$ ${parseFloat(data.price).toFixed(2)}</td>
+                <td>${lastUpdate}</td>
+                <td>
+                    ${currentRole === 'supervisor' ? `
+                        <button class="btn btn-small btn-warning" onclick="editFuelPrice('${fuelType}', ${data.price})">✏️ Editar</button>
+                    ` : 'Acesso restrito'}
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    console.log(`✅ ${Object.keys(fuelPrices).length} preços de combustível carregados`);
+}
+
+function showUpdatePricesModal() {
+    const form = document.getElementById('fuel-prices-form');
+    if (!form) return;
+
+    console.log('🔄 Abrindo modal de atualização de preços:', fuelPrices);
+
+    if (!fuelPrices || Object.keys(fuelPrices).length === 0) {
+        // Se não há preços, criar formulário com preços padrão
+        form.innerHTML = fuelTypes.map(fuelType => `
+            <div class="form-group">
+                <label>${fuelType}:</label>
+                <input type="number" step="0.01" id="price-${fuelType.replace(/\s+/g, '-')}" 
+                       placeholder="Preço por litro" value="0.00">
+            </div>
+        `).join('');
+    } else {
+        // Se há preços, usar os valores atuais
+        form.innerHTML = Object.entries(fuelPrices).map(([fuelType, data]) => `
+            <div class="form-group">
+                <label>${fuelType}:</label>
+                <input type="number" step="0.01" id="price-${fuelType.replace(/\s+/g, '-')}" 
+                       value="${data.price}" placeholder="Preço por litro">
+            </div>
+        `).join('');
+    }
+
+    document.getElementById('modal-update-prices').classList.add('active');
+}
+
+async function updateFuelPrices() {
+    const updatedPrices = {};
+    let hasChanges = false;
+
+    // Coletar preços de todos os combustíveis
+    fuelTypes.forEach(fuelType => {
+        const input = document.getElementById(`price-${fuelType.replace(/\s+/g, '-')}`);
+        if (input && input.value) {
+            const newPrice = parseFloat(input.value);
+            if (newPrice > 0) {
+                updatedPrices[fuelType] = newPrice;
+                hasChanges = true;
+            }
+        }
+    });
+
+    if (!hasChanges) {
+        showNotification('Nenhum preço válido foi informado!', 'warning');
+        return;
+    }
+
+    showLoading();
+    const result = await updateData('/fuel-prices', updatedPrices);
+    hideLoading();
+
+    if (result) {
+        await loadAllData();
+        closeModal('modal-update-prices');
+        showNotification('✅ Preços atualizados com sucesso!', 'success');
+
+        // Recalcular valores estimados para cada combustível alterado
+        for (const [fuelType, newPrice] of Object.entries(updatedPrices)) {
+            await recalculateEstimatedValues(fuelType, newPrice);
+        }
+    }
+}
+
+async function editFuelPrice(fuelType, currentPrice) {
+    const newPrice = prompt(`Editar preço de ${fuelType}:\n(Atual: R$ ${currentPrice.toFixed(2)})`, currentPrice.toFixed(2));
+
+    if (newPrice === null) return; // Usuário cancelou
+
+    const priceFloat = parseFloat(newPrice);
+
+    if (isNaN(priceFloat) || priceFloat <= 0) {
+        showNotification('Preço inválido!', 'error');
+        return;
+    }
+
+    showLoading();
+
+    const updatedPrices = {};
+    updatedPrices[fuelType] = priceFloat;
+
+    const result = await updateData('/fuel-prices', updatedPrices);
+    hideLoading();
+
+    if (result) {
+        await loadAllData();
+        showNotification(`✅ Preço de ${fuelType} atualizado para R$ ${priceFloat.toFixed(2)}!`, 'success');
+
+        // Atualizar valores estimados das requisições pendentes
+        await recalculateEstimatedValues(fuelType, priceFloat);
+    }
+}
+
+async function recalculateEstimatedValues(fuelType, newPrice) {
+    // Buscar requisições pendentes com este tipo de combustível
+    const pendingRequests = requests.filter(req =>
+        req.fuelType === fuelType &&
+        (req.status === 'pending' || req.status === 'signed')
+    );
+
+    if (pendingRequests.length === 0) return;
+
+    showLoading();
+
+    for (const req of pendingRequests) {
+        // Estimativa: tanque médio de 80 litros ou galão de 20 litros
+        const estimatedLiters = req.fuelMethod === 'tanque' ? 80 : 20;
+        const totalEstimated = newPrice * estimatedLiters;
+        const newEstimatedValue = `R$ ${totalEstimated.toFixed(2)}`;
+
+        // Atualizar apenas o valor estimado
+        await updateData(`/requests/${req.id}`, {
+            status: req.status,
+            supervisor: req.supervisor,
+            estimatedValue: newEstimatedValue
+        });
+    }
+
+    hideLoading();
+    await loadAllData();
+
+    showNotification(`📊 ${pendingRequests.length} requisição(ões) tiveram o valor estimado recalculado!`, 'success');
+}
+
 // ==================== FUNÇÕES DE VISUALIZAÇÃO ====================
 
 function loadRecentActivities() {
@@ -766,34 +1074,6 @@ function loadFuelRecords() {
     console.log('✅ Fuel records carregados:', fuelRecords.length);
 }
 
-function loadFuelPrices() {
-    const tbody = document.getElementById('fuel-prices-table');
-    if (!tbody) {
-        console.warn('Tabela fuel-prices-table não encontrada');
-        return;
-    }
-
-    if (!fuelPrices || Object.keys(fuelPrices).length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #64748b; padding: 40px;">Nenhum preço cadastrado</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = Object.entries(fuelPrices).map(([fuelType, data]) => `
-        <tr>
-            <td><strong>${fuelType}</strong></td>
-            <td id="price-display-${fuelType.replace(/\s+/g, '-')}">R$ ${parseFloat(data.price).toFixed(2)}</td>
-            <td>${formatDate(data.lastUpdate)}</td>
-            <td>
-                ${currentRole === 'supervisor' ? `
-                    <button class="btn btn-small btn-warning" onclick="editFuelPrice('${fuelType}', ${data.price})">✏️ Editar</button>
-                ` : ''}
-            </td>
-        </tr>
-    `).join('');
-
-    console.log('✅ Fuel prices carregados:', Object.keys(fuelPrices).length);
-}
-
 function loadVehicles() {
     const tbody = document.getElementById('vehicles-table');
     if (!tbody) {
@@ -832,122 +1112,7 @@ function loadVehicles() {
     console.log('✅ Veículos carregados:', vehicles.length);
 }
 
-// ==================== NOVA FUNÇÃO: EDITAR PREÇO INDIVIDUAL ====================
-async function editFuelPrice(fuelType, currentPrice) {
-    const newPrice = prompt(`Editar preço de ${fuelType}:\n(Atual: R$ ${currentPrice.toFixed(2)})`, currentPrice.toFixed(2));
-
-    if (newPrice === null) return; // Usuário cancelou
-
-    const priceFloat = parseFloat(newPrice);
-
-    if (isNaN(priceFloat) || priceFloat <= 0) {
-        showNotification('Preço inválido!', 'error');
-        return;
-    }
-
-    showLoading();
-
-    const updatedPrices = {};
-    updatedPrices[fuelType] = priceFloat;
-
-    const result = await updateData('/fuel-prices', updatedPrices);
-    hideLoading();
-
-    if (result) {
-        await loadAllData();
-        showNotification(`✅ Preço de ${fuelType} atualizado para R$ ${priceFloat.toFixed(2)}!`, 'success');
-
-        // Atualizar valores estimados das requisições pendentes
-        await recalculateEstimatedValues(fuelType, priceFloat);
-    }
-}
-
-// ==================== NOVA FUNÇÃO: RECALCULAR VALORES ESTIMADOS ====================
-async function recalculateEstimatedValues(fuelType, newPrice) {
-    // Buscar requisições pendentes com este tipo de combustível
-    const pendingRequests = requests.filter(req =>
-        req.fuelType === fuelType &&
-        (req.status === 'pending' || req.status === 'signed')
-    );
-
-    if (pendingRequests.length === 0) return;
-
-    showLoading();
-
-    for (const req of pendingRequests) {
-        // Estimativa: tanque médio de 80 litros ou galão de 20 litros
-        const estimatedLiters = req.fuelMethod === 'tanque' ? 80 : 20;
-        const totalEstimated = newPrice * estimatedLiters;
-        const newEstimatedValue = `R$ ${totalEstimated.toFixed(2)}`;
-
-        // Atualizar apenas o valor estimado
-        await updateData(`/requests/${req.id}`, {
-            status: req.status,
-            supervisor: req.supervisor,
-            estimatedValue: newEstimatedValue
-        });
-    }
-
-    hideLoading();
-    await loadAllData();
-
-    showNotification(`📊 ${pendingRequests.length} requisição(ões) tiveram o valor estimado recalculado!`, 'success');
-}
-
-function showUpdatePricesModal() {
-    const form = document.getElementById('fuel-prices-form');
-    if (!form) return;
-
-    if (!fuelPrices || Object.keys(fuelPrices).length === 0) {
-        showNotification('Nenhum preço cadastrado ainda', 'warning');
-        return;
-    }
-
-    form.innerHTML = Object.entries(fuelPrices).map(([fuelType, data]) => `
-        <div class="form-group">
-            <label>${fuelType}:</label>
-            <input type="number" step="0.01" id="price-${fuelType.replace(/\s+/g, '-')}" value="${data.price}" placeholder="Preço por litro">
-        </div>
-    `).join('');
-
-    document.getElementById('modal-update-prices').classList.add('active');
-}
-
-async function updateFuelPrices() {
-    const updatedPrices = {};
-    let hasChanges = false;
-
-    Object.keys(fuelPrices).forEach(fuelType => {
-        const input = document.getElementById(`price-${fuelType.replace(/\s+/g, '-')}`);
-        if (input && input.value) {
-            const newPrice = parseFloat(input.value);
-            if (newPrice !== fuelPrices[fuelType].price) {
-                updatedPrices[fuelType] = newPrice;
-                hasChanges = true;
-            }
-        }
-    });
-
-    if (!hasChanges) {
-        showNotification('Nenhum preço foi alterado', 'warning');
-        return;
-    }
-
-    showLoading();
-    const result = await updateData('/fuel-prices', updatedPrices);
-    hideLoading();
-
-    if (result) {
-        await loadAllData();
-        closeModal('modal-update-prices');
-        showNotification('✅ Preços atualizados!', 'success');
-
-        // Recalcular valores estimados para cada combustível alterado
-        for (const [fuelType, newPrice] of Object.entries(updatedPrices)) {
-            await recalculateEstimatedValues(fuelType, newPrice);
-        }
-    }
-}
+// ==================== FUNÇÕES DE RELATÓRIOS ====================
 
 function generateReport() {
     const startDate = document.getElementById('report-start-date').value;
@@ -1010,6 +1175,240 @@ function loadReportFilters() {
         option.textContent = driver;
         driverSelect.appendChild(option);
     });
+}
+
+// ==================== FUNÇÕES AUXILIARES ====================
+
+function updateCurrentDate() {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('pt-BR', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    const dateElement = document.getElementById('current-date');
+    if (dateElement) {
+        dateElement.textContent = dateStr;
+    }
+}
+
+function showScreen(screenId) {
+    if (currentRole === 'motorista' && ['vehicles', 'reports', 'fuel-records', 'fuel-prices'].includes(screenId)) {
+        showNotification('Acesso negado!', 'error');
+        return;
+    }
+
+    document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+    });
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+
+    const screenElement = document.getElementById(screenId);
+    if (screenElement) {
+        screenElement.classList.add('active');
+    }
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+        if (item.textContent.includes(getScreenName(screenId))) {
+            item.classList.add('active');
+        }
+    });
+
+    // Carregar dados específicos da tela
+    console.log(`📺 Mudando para tela: ${screenId}`);
+
+    switch(screenId) {
+        case 'requests':
+            loadAllRequests();
+            break;
+        case 'fuel-records':
+            console.log('📄 Carregando fuel-records...');
+            loadFuelRecords();
+            break;
+        case 'fuel-prices':
+            console.log('📄 Carregando fuel-prices...');
+            loadFuelPrices();
+            break;
+        case 'vehicles':
+            console.log('📄 Carregando vehicles...');
+            loadVehicles();
+            break;
+        case 'reports':
+            loadReportFilters();
+            generateReport();
+            break;
+    }
+}
+
+function getScreenName(screenId) {
+    const screenNames = {
+        'dashboard': '📊',
+        'requests': '📋',
+        'fuel-records': '⛽',
+        'fuel-prices': '💰',
+        'vehicles': '🚚',
+        'reports': '📈'
+    };
+    return screenNames[screenId] || '';
+}
+
+function updateStats() {
+    let filteredRequests = requests;
+
+    if (currentRole === 'motorista') {
+        filteredRequests = requests.filter(req => req.driver === currentDriverName);
+    }
+
+    const stats = {
+        pending: filteredRequests.filter(req => req.status === 'pending').length,
+        signed: filteredRequests.filter(req => req.status === 'signed').length,
+        fueled: filteredRequests.filter(req => req.status === 'fueled').length,
+        completed: filteredRequests.filter(req => req.status === 'completed').length
+    };
+
+    const statPending = document.getElementById('stat-pending');
+    const statSigned = document.getElementById('stat-signed');
+    const statFueled = document.getElementById('stat-fueled');
+    const statCompleted = document.getElementById('stat-completed');
+
+    if (statPending) statPending.textContent = stats.pending;
+    if (statSigned) statSigned.textContent = stats.signed;
+    if (statFueled) statFueled.textContent = stats.fueled;
+    if (statCompleted) statCompleted.textContent = stats.completed;
+}
+
+function newRequest() {
+    updateDriverName();
+    document.getElementById('modal-new-request').classList.add('active');
+    
+    // Forçar atualização dos selects
+    setTimeout(() => {
+        populateSelects();
+    }, 100);
+}
+
+function viewRequest(reqId) {
+    const request = requests.find(req => req.id === reqId);
+    if (!request) return;
+
+    const priorityText = {
+        'normal': 'Normal',
+        'urgent': 'Urgente',
+        'emergency': 'Emergência'
+    };
+
+    const fuelMethodText = {
+        'tanque': 'Tanque Completo',
+        'galao': 'Galão'
+    };
+
+    const realValueInfo = request.realValue ? `💰 Valor Real: ${request.realValue}\n` : '';
+    const litersInfo = request.liters ? `⛽ Litros: ${request.liters}\n` : '';
+    const priceInfo = request.pricePerLiter ? `💵 Preço/Litro: R$ ${request.pricePerLiter.toFixed(2)}\n` : '';
+
+    alert(`
+📋 DETALHES DA REQUISIÇÃO ${reqId}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 Motorista: ${request.driver}
+🚚 Veículo: ${request.vehicle}
+🏙️ Cidade: ${request.city || 'N/A'}
+⛽ Posto: ${request.gasStation || 'N/A'}
+🛢️ Combustível: ${request.fuelType || 'N/A'}
+🔧 Tipo: ${fuelMethodText[request.fuelMethod] || 'N/A'}
+📅 Data: ${formatDate(request.date)}
+👨‍💼 Supervisor: ${request.supervisor}
+💰 Valor Estimado: ${request.estimatedValue || 'N/A'}
+${priceInfo}${litersInfo}${realValueInfo}🛣️ KM: ${request.km ? request.km.toLocaleString() + ' km' : 'N/A'}
+⚡ Prioridade: ${priorityText[request.priority] || 'N/A'}
+📊 Status: ${getStatusText(request.status)}
+📝 Observações: ${request.notes}
+    `);
+}
+
+function viewFuelRecord(reqId) {
+    const record = fuelRecords.find(record => record.requestId === reqId);
+    if (!record) return;
+
+    const priceInfo = record.pricePerLiter ? `💵 Preço/Litro: R$ ${record.pricePerLiter.toFixed(2)}\n` : '';
+    const litersInfo = record.liters ? `⛽ Litros: ${record.liters}\n` : '';
+    const realValueInfo = record.realValue ? `💰 Valor Real: ${record.realValue}\n` : '';
+
+    alert(`
+⛽ REGISTRO DE ABASTECIMENTO ${reqId}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 Motorista: ${record.driver}
+🚚 Veículo: ${record.vehicle}
+⛽ Posto: ${record.gasStation}
+🛢️ Combustível: ${record.fuelType}
+💰 Valor Estimado: ${record.estimatedValue}
+${priceInfo}${litersInfo}${realValueInfo}📊 Status: ${getStatusText(record.status)}
+📅 Data: ${formatDate(record.date)}
+${record.notes ? `📝 Observações: ${record.notes}` : ''}
+    `);
+}
+
+function getStatusText(status) {
+    const statusMap = {
+        'pending': 'Pendente',
+        'signed': 'Aprovado',
+        'rejected': 'Rejeitado',
+        'fueled': 'Abastecido',
+        'completed': 'Completo'
+    };
+    return statusMap[status] || status;
+}
+
+function formatDate(dateStr) {
+    if (!dateStr || dateStr === 'Nunca') return 'Nunca';
+    try {
+        const date = new Date(dateStr + 'T00:00:00');
+        return date.toLocaleDateString('pt-BR');
+    } catch (e) {
+        return dateStr;
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+function clearForm(prefix) {
+    const inputs = document.querySelectorAll(`[id^="${prefix}"]`);
+    inputs.forEach(input => {
+        if (input.type === 'text' || input.type === 'number' || input.type === 'email' || input.tagName === 'TEXTAREA') {
+            input.value = '';
+        } else if (input.tagName === 'SELECT') {
+            input.selectedIndex = 0;
+        }
+    });
+}
+
+function showNotification(message, type = 'success') {
+    const notification = document.getElementById('notification');
+    if (!notification) return;
+
+    notification.textContent = message;
+    notification.className = `notification ${type} show`;
+
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 5000);
+}
+
+function filterByStatus(status) {
+    if (currentRole === 'motorista') {
+        showNotification('Filtros disponíveis apenas para supervisores', 'warning');
+        return;
+    }
+    showScreen('requests');
+    showNotification(`Filtrando por: ${getStatusText(status)}`, 'success');
 }
 
 // ==================== EXPORTAÇÃO EXCEL ====================
@@ -1146,298 +1545,6 @@ function exportToExcel(type) {
         console.error('Erro na exportação:', error);
         showNotification('Erro ao exportar!', 'error');
     }
-}
-
-// ==================== FUNÇÕES AUXILIARES ====================
-
-function updateCurrentDate() {
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('pt-BR', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-    const dateElement = document.getElementById('current-date');
-    if (dateElement) {
-        dateElement.textContent = dateStr;
-    }
-}
-
-function showScreen(screenId) {
-    if (currentRole === 'motorista' && ['vehicles', 'reports', 'fuel-records', 'fuel-prices'].includes(screenId)) {
-        showNotification('Acesso negado!', 'error');
-        return;
-    }
-
-    document.querySelectorAll('.screen').forEach(screen => {
-        screen.classList.remove('active');
-    });
-
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-
-    const screenElement = document.getElementById(screenId);
-    if (screenElement) {
-        screenElement.classList.add('active');
-    }
-
-    document.querySelectorAll('.nav-item').forEach(item => {
-        if (item.textContent.includes(getScreenName(screenId))) {
-            item.classList.add('active');
-        }
-    });
-
-    // Carregar dados específicos da tela
-    console.log(`📺 Mudando para tela: ${screenId}`);
-
-    switch(screenId) {
-        case 'requests':
-            loadAllRequests();
-            break;
-        case 'fuel-records':
-            console.log('📄 Carregando fuel-records...');
-            loadFuelRecords();
-            break;
-        case 'fuel-prices':
-            console.log('📄 Carregando fuel-prices...');
-            loadFuelPrices();
-            break;
-        case 'vehicles':
-            console.log('📄 Carregando vehicles...');
-            loadVehicles();
-            break;
-        case 'reports':
-            loadReportFilters();
-            generateReport();
-            break;
-    }
-}
-
-function getScreenName(screenId) {
-    const screenNames = {
-        'dashboard': '📊',
-        'requests': '📋',
-        'fuel-records': '⛽',
-        'fuel-prices': '💰',
-        'vehicles': '🚚',
-        'reports': '📈'
-    };
-    return screenNames[screenId] || '';
-}
-
-function populateSelects() {
-    // Popular cidade
-    const citySelects = ['new-request-city'];
-    citySelects.forEach(selectId => {
-        const select = document.getElementById(selectId);
-        if (select) {
-            select.innerHTML = '<option value="">Selecione uma cidade</option>';
-            cities.forEach(city => {
-                const option = document.createElement('option');
-                option.value = city;
-                option.textContent = city;
-                select.appendChild(option);
-            });
-        }
-    });
-}
-
-function updateVehiclePlatesSelect() {
-    const plateSelect = document.getElementById('new-request-plate');
-    if (!plateSelect) return;
-
-    plateSelect.innerHTML = '<option value="">Selecione uma placa</option>';
-
-    if (!Array.isArray(vehicles) || vehicles.length === 0) {
-        console.warn('Nenhum veículo disponível para popular select');
-        return;
-    }
-
-    // Filtrar apenas veículos ativos para requisições
-    const activeVehicles = vehicles.filter(vehicle => vehicle.status === 'Ativo');
-
-    activeVehicles.forEach(vehicle => {
-        const option = document.createElement('option');
-        option.value = vehicle.plate;
-        option.textContent = vehicle.plate;
-        option.setAttribute('data-model', vehicle.model);
-        plateSelect.appendChild(option);
-    });
-
-    console.log(`✅ ${activeVehicles.length} placas ativas adicionadas ao select`);
-}
-
-function updateDriverName() {
-    const driverInput = document.getElementById('new-request-driver');
-    if (driverInput) {
-        driverInput.value = currentDriverName;
-    }
-}
-
-function updateVehicleModel() {
-    const plateSelect = document.getElementById('new-request-plate');
-    const modelInput = document.getElementById('new-request-vehicle-model');
-
-    if (plateSelect && modelInput) {
-        const selectedOption = plateSelect.options[plateSelect.selectedIndex];
-        if (selectedOption && selectedOption.getAttribute('data-model')) {
-            modelInput.value = selectedOption.getAttribute('data-model');
-        } else {
-            modelInput.value = '';
-        }
-    }
-}
-
-function updateStats() {
-    let filteredRequests = requests;
-
-    if (currentRole === 'motorista') {
-        filteredRequests = requests.filter(req => req.driver === currentDriverName);
-    }
-
-    const stats = {
-        pending: filteredRequests.filter(req => req.status === 'pending').length,
-        signed: filteredRequests.filter(req => req.status === 'signed').length,
-        fueled: filteredRequests.filter(req => req.status === 'fueled').length,
-        completed: filteredRequests.filter(req => req.status === 'completed').length
-    };
-
-    const statPending = document.getElementById('stat-pending');
-    const statSigned = document.getElementById('stat-signed');
-    const statFueled = document.getElementById('stat-fueled');
-    const statCompleted = document.getElementById('stat-completed');
-
-    if (statPending) statPending.textContent = stats.pending;
-    if (statSigned) statSigned.textContent = stats.signed;
-    if (statFueled) statFueled.textContent = stats.fueled;
-    if (statCompleted) statCompleted.textContent = stats.completed;
-}
-
-function newRequest() {
-    updateDriverName();
-    document.getElementById('modal-new-request').classList.add('active');
-}
-
-function viewRequest(reqId) {
-    const request = requests.find(req => req.id === reqId);
-    if (!request) return;
-
-    const priorityText = {
-        'normal': 'Normal',
-        'urgent': 'Urgente',
-        'emergency': 'Emergência'
-    };
-
-    const fuelMethodText = {
-        'tanque': 'Tanque Completo',
-        'galao': 'Galão'
-    };
-
-    const realValueInfo = request.realValue ? `💰 Valor Real: ${request.realValue}\n` : '';
-    const litersInfo = request.liters ? `⛽ Litros: ${request.liters}\n` : '';
-    const priceInfo = request.pricePerLiter ? `💵 Preço/Litro: R$ ${request.pricePerLiter.toFixed(2)}\n` : '';
-
-    alert(`
-📋 DETALHES DA REQUISIÇÃO ${reqId}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-👤 Motorista: ${request.driver}
-🚚 Veículo: ${request.vehicle}
-🏙️ Cidade: ${request.city || 'N/A'}
-⛽ Posto: ${request.gasStation || 'N/A'}
-🛢️ Combustível: ${request.fuelType || 'N/A'}
-🔧 Tipo: ${fuelMethodText[request.fuelMethod] || 'N/A'}
-📅 Data: ${formatDate(request.date)}
-👨‍💼 Supervisor: ${request.supervisor}
-💰 Valor Estimado: ${request.estimatedValue || 'N/A'}
-${priceInfo}${litersInfo}${realValueInfo}🛣️ KM: ${request.km ? request.km.toLocaleString() + ' km' : 'N/A'}
-⚡ Prioridade: ${priorityText[request.priority] || 'N/A'}
-📊 Status: ${getStatusText(request.status)}
-📝 Observações: ${request.notes}
-    `);
-}
-
-function viewFuelRecord(reqId) {
-    const record = fuelRecords.find(record => record.requestId === reqId);
-    if (!record) return;
-
-    const priceInfo = record.pricePerLiter ? `💵 Preço/Litro: R$ ${record.pricePerLiter.toFixed(2)}\n` : '';
-    const litersInfo = record.liters ? `⛽ Litros: ${record.liters}\n` : '';
-    const realValueInfo = record.realValue ? `💰 Valor Real: ${record.realValue}\n` : '';
-
-    alert(`
-⛽ REGISTRO DE ABASTECIMENTO ${reqId}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-👤 Motorista: ${record.driver}
-🚚 Veículo: ${record.vehicle}
-⛽ Posto: ${record.gasStation}
-🛢️ Combustível: ${record.fuelType}
-💰 Valor Estimado: ${record.estimatedValue}
-${priceInfo}${litersInfo}${realValueInfo}📊 Status: ${getStatusText(record.status)}
-📅 Data: ${formatDate(record.date)}
-${record.notes ? `📝 Observações: ${record.notes}` : ''}
-    `);
-}
-
-function getStatusText(status) {
-    const statusMap = {
-        'pending': 'Pendente',
-        'signed': 'Aprovado',
-        'rejected': 'Rejeitado',
-        'fueled': 'Abastecido',
-        'completed': 'Completo'
-    };
-    return statusMap[status] || status;
-}
-
-function formatDate(dateStr) {
-    if (!dateStr || dateStr === 'Nunca') return 'Nunca';
-    try {
-        const date = new Date(dateStr + 'T00:00:00');
-        return date.toLocaleDateString('pt-BR');
-    } catch (e) {
-        return dateStr;
-    }
-}
-
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('active');
-    }
-}
-
-function clearForm(prefix) {
-    const inputs = document.querySelectorAll(`[id^="${prefix}"]`);
-    inputs.forEach(input => {
-        if (input.type === 'text' || input.type === 'number' || input.type === 'email' || input.tagName === 'TEXTAREA') {
-            input.value = '';
-        } else if (input.tagName === 'SELECT') {
-            input.selectedIndex = 0;
-        }
-    });
-}
-
-function showNotification(message, type = 'success') {
-    const notification = document.getElementById('notification');
-    if (!notification) return;
-
-    notification.textContent = message;
-    notification.className = `notification ${type} show`;
-
-    setTimeout(() => {
-        notification.classList.remove('show');
-    }, 5000);
-}
-
-function filterByStatus(status) {
-    if (currentRole === 'motorista') {
-        showNotification('Filtros disponíveis apenas para supervisores', 'warning');
-        return;
-    }
-    showScreen('requests');
-    showNotification(`Filtrando por: ${getStatusText(status)}`, 'success');
 }
 
 // ==================== INICIALIZAÇÃO ====================
