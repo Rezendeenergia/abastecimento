@@ -281,6 +281,31 @@ app.put('/api/requests/:id', (req, res) => {
     });
 });
 
+// DELETE - Deletar requisição
+app.delete('/api/requests/:id', (req, res) => {
+    const { id } = req.params;
+
+    // Iniciar uma transação para garantir que ambos os dados sejam deletados
+    db.serialize(() => {
+        // Primeiro deletar o registro de abastecimento associado
+        db.run('DELETE FROM fuel_records WHERE requestId = ?', [id], function(err) {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            
+            // Depois deletar a requisição
+            db.run('DELETE FROM requests WHERE id = ?', [id], function(err) {
+                if (err) {
+                    res.status(500).json({ error: err.message });
+                    return;
+                }
+                res.json({ success: true, changes: this.changes });
+            });
+        });
+    });
+});
+
 // GET - Buscar todos os veículos
 app.get('/api/vehicles', (req, res) => {
     db.all('SELECT * FROM vehicles ORDER BY plate', [], (err, rows) => {
