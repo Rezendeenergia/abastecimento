@@ -11,6 +11,8 @@ let requests = [];
 let vehicles = [];
 let fuelRecords = [];
 let fuelPrices = {};
+let fuelConsumption = [];
+let consumptionSummary = [];
 
 // Listas de dados do sistema
 const cities = [
@@ -153,19 +155,15 @@ async function loadAllData() {
     showLoading();
 
     try {
-        // Carregar requisições
         const reqData = await fetchData('/requests');
         if (reqData) requests = reqData;
 
-        // Carregar veículos
         const vehData = await fetchData('/vehicles');
         if (vehData) vehicles = vehData;
 
-        // Carregar registros de abastecimento
         const fuelData = await fetchData('/fuel-records');
         if (fuelData) fuelRecords = fuelData;
 
-        // Carregar preços
         const pricesData = await fetchData('/fuel-prices');
         if (pricesData) {
             fuelPrices = {};
@@ -177,7 +175,6 @@ async function loadAllData() {
             });
         }
 
-        // Atualizar interface
         loadRecentActivities();
         loadAllRequests();
         loadFuelRecords();
@@ -315,6 +312,7 @@ function setupUserInterface() {
     const navReports = document.getElementById('nav-reports');
     const navFuelRecords = document.getElementById('nav-fuel-records');
     const navFuelPrices = document.getElementById('nav-fuel-prices');
+    const navFuelConsumption = document.getElementById('nav-fuel-consumption');
     const actionReports = document.getElementById('action-reports');
     const actionExport = document.getElementById('action-export');
     const exportRequestsBtn = document.getElementById('export-requests-btn');
@@ -328,6 +326,7 @@ function setupUserInterface() {
         if (navReports) navReports.classList.remove('hidden');
         if (navFuelRecords) navFuelRecords.classList.remove('hidden');
         if (navFuelPrices) navFuelPrices.classList.remove('hidden');
+        if (navFuelConsumption) navFuelConsumption.classList.remove('hidden');
         if (actionReports) actionReports.style.display = 'block';
         if (actionExport) actionExport.style.display = 'block';
         if (exportRequestsBtn) exportRequestsBtn.style.display = 'block';
@@ -340,6 +339,7 @@ function setupUserInterface() {
         if (navReports) navReports.classList.add('hidden');
         if (navFuelRecords) navFuelRecords.classList.add('hidden');
         if (navFuelPrices) navFuelPrices.classList.add('hidden');
+        if (navFuelConsumption) navFuelConsumption.classList.add('hidden');
         if (actionReports) actionReports.style.display = 'none';
         if (actionExport) actionExport.style.display = 'none';
         if (exportRequestsBtn) exportRequestsBtn.style.display = 'none';
@@ -353,8 +353,7 @@ function setupUserInterface() {
 
 function populateSelects() {
     console.log('🔄 Populando selects...');
-    
-    // Popular cidade
+
     const citySelect = document.getElementById('new-request-city');
     if (citySelect) {
         citySelect.innerHTML = '<option value="">Selecione uma cidade</option>';
@@ -364,10 +363,8 @@ function populateSelects() {
             option.textContent = city;
             citySelect.appendChild(option);
         });
-        console.log(`✅ Cidades carregadas: ${cities.length}`);
     }
 
-    // Popular postos
     const stationSelect = document.getElementById('new-request-gas-station');
     if (stationSelect) {
         stationSelect.innerHTML = '<option value="">Selecione um posto</option>';
@@ -377,10 +374,8 @@ function populateSelects() {
             option.textContent = station;
             stationSelect.appendChild(option);
         });
-        console.log(`✅ Postos carregados: ${gasStations.length}`);
     }
 
-    // Popular combustíveis
     const fuelSelect = document.getElementById('new-request-fuel-type');
     if (fuelSelect) {
         fuelSelect.innerHTML = '<option value="">Selecione o combustível</option>';
@@ -390,10 +385,8 @@ function populateSelects() {
             option.textContent = fuel;
             fuelSelect.appendChild(option);
         });
-        console.log(`✅ Combustíveis carregados: ${fuelTypes.length}`);
     }
 
-    // Popular prioridade
     const prioritySelect = document.getElementById('new-request-priority');
     if (prioritySelect) {
         prioritySelect.innerHTML = `
@@ -403,7 +396,6 @@ function populateSelects() {
         `;
     }
 
-    // Popular método de abastecimento
     const fuelMethodSelect = document.getElementById('new-request-fuel-method');
     if (fuelMethodSelect) {
         fuelMethodSelect.innerHTML = `
@@ -414,24 +406,15 @@ function populateSelects() {
 
     updateVehiclePlatesSelect();
     updateDriverName();
-    
-    console.log('✅ Todos os selects populados');
 }
 
 function updateVehiclePlatesSelect() {
     const plateSelect = document.getElementById('new-request-plate');
-    if (!plateSelect) {
-        console.error('❌ Elemento new-request-plate não encontrado');
-        return;
-    }
-
-    console.log('🔄 Atualizando select de placas...');
-    console.log('📊 Veículos disponíveis:', vehicles);
+    if (!plateSelect) return;
 
     plateSelect.innerHTML = '<option value="">Selecione uma placa</option>';
 
     if (!Array.isArray(vehicles) || vehicles.length === 0) {
-        console.warn('⚠️ Nenhum veículo disponível para popular select');
         const option = document.createElement('option');
         option.value = '';
         option.textContent = 'Nenhum veículo cadastrado';
@@ -440,12 +423,9 @@ function updateVehiclePlatesSelect() {
         return;
     }
 
-    // Filtrar apenas veículos ativos para requisições
-    const activeVehicles = vehicles.filter(vehicle => 
+    const activeVehicles = vehicles.filter(vehicle =>
         vehicle.status === 'Ativo' || vehicle.status === 'ativo'
     );
-
-    console.log(`🚗 Veículos ativos: ${activeVehicles.length}`);
 
     if (activeVehicles.length === 0) {
         const option = document.createElement('option');
@@ -453,19 +433,16 @@ function updateVehiclePlatesSelect() {
         option.textContent = 'Nenhum veículo ativo disponível';
         option.disabled = true;
         plateSelect.appendChild(option);
-        console.warn('⚠️ Nenhum veículo ativo encontrado');
         return;
     }
 
     activeVehicles.forEach(vehicle => {
         const option = document.createElement('option');
         option.value = vehicle.plate;
-        option.textContent = vehicle.plate; // APENAS A PLACA
+        option.textContent = vehicle.plate;
         option.setAttribute('data-model', vehicle.model);
         plateSelect.appendChild(option);
     });
-
-    console.log(`✅ ${activeVehicles.length} placas ativas adicionadas ao select`);
 }
 
 function updateDriverName() {
@@ -481,17 +458,14 @@ function updateVehicleModel() {
 
     if (plateSelect && modelInput) {
         const selectedPlate = plateSelect.value;
-        
+
         if (selectedPlate) {
-            // Buscar o veículo pela placa selecionada
             const selectedVehicle = vehicles.find(vehicle => vehicle.plate === selectedPlate);
-            
+
             if (selectedVehicle) {
                 modelInput.value = selectedVehicle.model;
-                console.log(`✅ Modelo carregado: ${selectedVehicle.model} para placa ${selectedPlate}`);
             } else {
                 modelInput.value = '';
-                console.warn(`⚠️ Veículo não encontrado para placa: ${selectedPlate}`);
             }
         } else {
             modelInput.value = '';
@@ -517,15 +491,12 @@ async function createRequest() {
         return;
     }
 
-    // Verificar se o modelo foi carregado
     if (!vehicleModel) {
         showNotification('Por favor, selecione uma placa válida para carregar o modelo do veículo!', 'error');
         return;
     }
 
-    // VALOR ESTIMADO REMOVIDO - será definido pelo supervisor depois
     const estimatedValue = 'A definir';
-
     const newId = `REQ-${new Date().getFullYear()}-${String(requests.length + 1).padStart(3, '0')}`;
     const today = new Date().toISOString().split('T')[0];
 
@@ -598,7 +569,6 @@ async function rejectRequest(reqId) {
     }
 }
 
-// NOVA FUNÇÃO PARA DELETAR REQUISIÇÃO
 async function deleteRequest(reqId) {
     if (currentRole !== 'supervisor') {
         showNotification('Apenas supervisores podem deletar requisições!', 'error');
@@ -639,7 +609,6 @@ async function completeFuelRecord(reqId) {
         return;
     }
 
-    // PEGAR PREÇO AUTOMATICAMENTE DA TABELA DE PREÇOS
     const fuelType = request.fuelType;
     const pricePerLiter = fuelPrices[fuelType] ? fuelPrices[fuelType].price : null;
 
@@ -648,7 +617,6 @@ async function completeFuelRecord(reqId) {
         return;
     }
 
-    // MOSTRAR PREÇO AUTOMÁTICO AO SUPERVISOR
     const liters = prompt(
         `Registrar abastecimento para ${fuelType}\n\n` +
         `Preço por litro: R$ ${pricePerLiter.toFixed(2)}\n` +
@@ -658,18 +626,16 @@ async function completeFuelRecord(reqId) {
     if (!liters) return;
 
     const litersFloat = parseFloat(liters);
-    
+
     if (isNaN(litersFloat) || litersFloat <= 0) {
         showNotification('Quantidade de litros inválida!', 'error');
         return;
     }
 
-    // CALCULAR VALOR REAL AUTOMATICAMENTE
     const totalValue = litersFloat * pricePerLiter;
 
     showLoading();
 
-    // Atualizar fuel_record
     await updateData(`/fuel-records/${reqId}`, {
         liters: `${litersFloat.toFixed(2)} L`,
         pricePerLiter: pricePerLiter,
@@ -677,7 +643,6 @@ async function completeFuelRecord(reqId) {
         status: 'completed'
     });
 
-    // Atualizar request
     await updateData(`/requests/${reqId}`, {
         status: 'completed',
         supervisor: currentDriverName,
@@ -693,7 +658,7 @@ async function completeFuelRecord(reqId) {
         `✅ Abastecimento ${reqId} registrado!\n` +
         `Litros: ${litersFloat.toFixed(2)} L\n` +
         `Preço/L: R$ ${pricePerLiter.toFixed(2)}\n` +
-        `Valor Total: R$ ${totalValue.toFixed(2)}`, 
+        `Valor Total: R$ ${totalValue.toFixed(2)}`,
         'success'
     );
 }
@@ -705,7 +670,6 @@ async function editFuelRecord(reqId) {
     const request = requests.find(req => req.id === reqId);
     if (!request) return;
 
-    // PEGAR PREÇO AUTOMATICAMENTE DA TABELA DE PREÇOS
     const fuelType = request.fuelType;
     const pricePerLiter = fuelPrices[fuelType] ? fuelPrices[fuelType].price : null;
 
@@ -716,24 +680,22 @@ async function editFuelRecord(reqId) {
 
     const currentLiters = fuelRecord.liters ? parseFloat(fuelRecord.liters.replace(' L', '')) : 0;
 
-    // MOSTRAR PREÇO AUTOMÁTICO AO SUPERVISOR
     const liters = prompt(
         `Editar abastecimento para ${fuelType}\n\n` +
         `Preço por litro: R$ ${pricePerLiter.toFixed(2)}\n` +
-        `Digite a nova quantidade de litros:\n(Atual: ${currentLiters.toFixed(2)} L)`, 
+        `Digite a nova quantidade de litros:\n(Atual: ${currentLiters.toFixed(2)} L)`,
         currentLiters
     );
 
     if (!liters) return;
 
     const litersFloat = parseFloat(liters);
-    
+
     if (isNaN(litersFloat) || litersFloat <= 0) {
         showNotification('Quantidade de litros inválida!', 'error');
         return;
     }
 
-    // CALCULAR NOVO VALOR REAL AUTOMATICAMENTE
     const totalValue = litersFloat * pricePerLiter;
 
     showLoading();
@@ -760,7 +722,7 @@ async function editFuelRecord(reqId) {
         `✅ Registro ${reqId} atualizado!\n` +
         `Novos litros: ${litersFloat.toFixed(2)} L\n` +
         `Preço/L: R$ ${pricePerLiter.toFixed(2)}\n` +
-        `Novo Valor: R$ ${totalValue.toFixed(2)}`, 
+        `Novo Valor: R$ ${totalValue.toFixed(2)}`,
         'success'
     );
 }
@@ -773,7 +735,6 @@ function showNewVehicleModal() {
         return;
     }
 
-    // Limpar formulário
     document.getElementById('new-vehicle-plate').value = '';
     document.getElementById('new-vehicle-model').value = '';
     document.getElementById('new-vehicle-year').value = '';
@@ -797,7 +758,6 @@ async function createVehicle() {
         return;
     }
 
-    // Verificar se a placa já existe
     const existingVehicle = vehicles.find(v => v.plate === plate);
     if (existingVehicle) {
         showNotification('Já existe um veículo com esta placa!', 'error');
@@ -833,8 +793,6 @@ async function createVehicle() {
             await loadAllData();
             closeModal('modal-new-vehicle');
             showNotification(`✅ Veículo ${plate} cadastrado com sucesso!`, 'success');
-
-            // Atualizar o select de placas no formulário de requisições
             updateVehiclePlatesSelect();
         }
     } catch (error) {
@@ -869,8 +827,6 @@ async function deleteVehicle(plate) {
         if (result.success) {
             await loadAllData();
             showNotification(`✅ Veículo ${plate} excluído com sucesso!`, 'success');
-
-            // Atualizar o select de placas no formulário de requisições
             updateVehiclePlatesSelect();
         }
     } catch (error) {
@@ -885,12 +841,7 @@ async function deleteVehicle(plate) {
 
 function loadFuelPrices() {
     const tbody = document.getElementById('fuel-prices-table');
-    if (!tbody) {
-        console.warn('Tabela fuel-prices-table não encontrada');
-        return;
-    }
-
-    console.log('🔄 Carregando preços de combustível:', fuelPrices);
+    if (!tbody) return;
 
     if (!fuelPrices || Object.keys(fuelPrices).length === 0) {
         tbody.innerHTML = `
@@ -900,7 +851,6 @@ function loadFuelPrices() {
                 </td>
             </tr>
         `;
-        console.warn('⚠️ Nenhum preço de combustível encontrado');
         return;
     }
 
@@ -909,7 +859,7 @@ function loadFuelPrices() {
         return `
             <tr>
                 <td><strong>${fuelType}</strong></td>
-                <td id="price-display-${fuelType.replace(/\s+/g, '-')}">R$ ${parseFloat(data.price).toFixed(2)}</td>
+                <td>R$ ${parseFloat(data.price).toFixed(2)}</td>
                 <td>${lastUpdate}</td>
                 <td>
                     ${currentRole === 'supervisor' ? `
@@ -919,31 +869,25 @@ function loadFuelPrices() {
             </tr>
         `;
     }).join('');
-
-    console.log(`✅ ${Object.keys(fuelPrices).length} preços de combustível carregados`);
 }
 
 function showUpdatePricesModal() {
     const form = document.getElementById('fuel-prices-form');
     if (!form) return;
 
-    console.log('🔄 Abrindo modal de atualização de preços:', fuelPrices);
-
     if (!fuelPrices || Object.keys(fuelPrices).length === 0) {
-        // Se não há preços, criar formulário com preços padrão
         form.innerHTML = fuelTypes.map(fuelType => `
             <div class="form-group">
                 <label>${fuelType}:</label>
-                <input type="number" step="0.01" id="price-${fuelType.replace(/\s+/g, '-')}" 
+                <input type="number" step="0.01" id="price-${fuelType.replace(/\s+/g, '-')}"
                        placeholder="Preço por litro" value="0.00">
             </div>
         `).join('');
     } else {
-        // Se há preços, usar os valores atuais
         form.innerHTML = Object.entries(fuelPrices).map(([fuelType, data]) => `
             <div class="form-group">
                 <label>${fuelType}:</label>
-                <input type="number" step="0.01" id="price-${fuelType.replace(/\s+/g, '-')}" 
+                <input type="number" step="0.01" id="price-${fuelType.replace(/\s+/g, '-')}"
                        value="${data.price}" placeholder="Preço por litro">
             </div>
         `).join('');
@@ -956,7 +900,6 @@ async function updateFuelPrices() {
     const updatedPrices = {};
     let hasChanges = false;
 
-    // Coletar preços de todos os combustíveis
     fuelTypes.forEach(fuelType => {
         const input = document.getElementById(`price-${fuelType.replace(/\s+/g, '-')}`);
         if (input && input.value) {
@@ -987,7 +930,7 @@ async function updateFuelPrices() {
 async function editFuelPrice(fuelType, currentPrice) {
     const newPrice = prompt(`Editar preço de ${fuelType}:\n(Atual: R$ ${currentPrice.toFixed(2)})`, currentPrice.toFixed(2));
 
-    if (newPrice === null) return; // Usuário cancelou
+    if (newPrice === null) return;
 
     const priceFloat = parseFloat(newPrice);
 
@@ -1007,6 +950,167 @@ async function editFuelPrice(fuelType, currentPrice) {
     if (result) {
         await loadAllData();
         showNotification(`✅ Preço de ${fuelType} atualizado para R$ ${priceFloat.toFixed(2)}!`, 'success');
+    }
+}
+
+// ==================== FUNÇÕES DE CONSUMO MÉDIO ====================
+
+async function loadFuelConsumption() {
+    showLoading();
+
+    try {
+        const consumptionData = await fetchData('/fuel-consumption');
+        if (consumptionData) fuelConsumption = consumptionData;
+
+        const summaryData = await fetchData('/fuel-consumption/summary');
+        if (summaryData) consumptionSummary = summaryData;
+
+        loadConsumptionTable();
+        loadConsumptionSummary();
+
+        console.log('✅ Dados de consumo carregados');
+    } catch (error) {
+        console.error('Erro ao carregar consumo:', error);
+        showNotification('Erro ao carregar dados de consumo', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function loadConsumptionSummary() {
+    const summaryContainer = document.getElementById('consumption-summary');
+    if (!summaryContainer) return;
+
+    if (!consumptionSummary || consumptionSummary.length === 0) {
+        summaryContainer.innerHTML = '<p style="text-align: center; color: #64748b; padding: 30px;">Nenhum dado disponível. É necessário pelo menos 2 abastecimentos completos por veículo.</p>';
+        return;
+    }
+
+    const avgConsumptions = consumptionSummary.map(v => v.lastAvgConsumption).filter(c => c);
+    const overallAvg = avgConsumptions.length > 0
+        ? (avgConsumptions.reduce((a, b) => a + b, 0) / avgConsumptions.length).toFixed(2)
+        : '0.00';
+
+    const bestVehicle = consumptionSummary[0];
+    const worstVehicle = consumptionSummary[consumptionSummary.length - 1];
+
+    summaryContainer.innerHTML = `
+        <div class="summary-cards">
+            <div class="summary-card">
+                <h4>📊 Média Geral da Frota</h4>
+                <p class="big-number">${overallAvg} km/L</p>
+                <p class="small-text">${consumptionSummary.length} veículos monitorados</p>
+            </div>
+            <div class="summary-card success">
+                <h4>🏆 Melhor Desempenho</h4>
+                <p class="medium-text">${bestVehicle.vehicle}</p>
+                <p class="big-number">${bestVehicle.lastAvgConsumption} km/L</p>
+            </div>
+            <div class="summary-card warning">
+                <h4>⚠️ Necessita Atenção</h4>
+                <p class="medium-text">${worstVehicle.vehicle}</p>
+                <p class="big-number">${worstVehicle.lastAvgConsumption} km/L</p>
+            </div>
+            <div class="summary-card info">
+                <h4>📈 Total de Análises</h4>
+                <p class="big-number">${fuelConsumption.length}</p>
+                <p class="small-text">registros de consumo</p>
+            </div>
+        </div>
+    `;
+}
+
+function loadConsumptionTable() {
+    const tbody = document.getElementById('consumption-table');
+    if (!tbody) return;
+
+    if (!fuelConsumption || fuelConsumption.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: #64748b; padding: 40px;">Nenhum registro de consumo encontrado.<br>É necessário pelo menos 2 abastecimentos completos por veículo para calcular o consumo médio.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = fuelConsumption.map(record => {
+        const performanceClass =
+            record.avgConsumption >= 8 ? 'status-signed' :
+            record.avgConsumption >= 6 ? 'status-pending' :
+            record.avgConsumption >= 4 ? 'status-fueled' : 'status-rejected';
+
+        const performanceText =
+            record.avgConsumption >= 8 ? '🌟 Excelente' :
+            record.avgConsumption >= 6 ? '✅ Bom' :
+            record.avgConsumption >= 4 ? '⚠️ Regular' : '❌ Atenção';
+
+        return `
+            <tr>
+                <td><strong>${record.vehicle}</strong></td>
+                <td>${record.driver}</td>
+                <td>${formatDate(record.previousDate)}</td>
+                <td>${record.previousKm.toLocaleString()} km</td>
+                <td>${formatDate(record.currentDate)}</td>
+                <td>${record.currentKm.toLocaleString()} km</td>
+                <td><strong>${record.kmDriven.toLocaleString()} km</strong></td>
+                <td>${record.litersUsed.toFixed(2)} L</td>
+                <td class="consumption-highlight"><strong>${record.avgConsumption} km/L</strong></td>
+                <td><span class="status-badge ${performanceClass}">${performanceText}</span></td>
+                <td>${record.fuelType}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function exportConsumptionToExcel() {
+    if (!fuelConsumption || fuelConsumption.length === 0) {
+        showNotification('Nenhum dado de consumo para exportar!', 'warning');
+        return;
+    }
+
+    try {
+        const detailedData = fuelConsumption.map(record => ({
+            'Veículo': record.vehicle,
+            'Placa': record.plate,
+            'Motorista': record.driver,
+            'Data Anterior': formatDate(record.previousDate),
+            'KM Anterior': record.previousKm,
+            'Data Atual': formatDate(record.currentDate),
+            'KM Atual': record.currentKm,
+            'KM Rodados': record.kmDriven,
+            'Litros Usados': record.litersUsed.toFixed(2),
+            'Consumo Médio (km/L)': record.avgConsumption,
+            'Combustível': record.fuelType,
+            'Posto': record.gasStation,
+            'Valor Pago': record.realValue || 'N/A',
+            'Desempenho': record.avgConsumption >= 8 ? 'Excelente' :
+                         record.avgConsumption >= 6 ? 'Bom' :
+                         record.avgConsumption >= 4 ? 'Regular' : 'Atenção'
+        }));
+
+        const summaryData = consumptionSummary.map(record => ({
+            'Veículo': record.vehicle,
+            'Placa': record.plate,
+            'Última Data': formatDate(record.lastFuelDate),
+            'KM Atual': record.currentKm,
+            'KM Rodados': record.kmDriven,
+            'Litros Usados': record.litersUsed ? record.litersUsed.toFixed(2) : 'N/A',
+            'Último Consumo (km/L)': record.lastAvgConsumption,
+            'Desempenho': record.performance,
+            'Tipo Combustível': record.fuelType
+        }));
+
+        const wb = XLSX.utils.book_new();
+
+        const ws1 = XLSX.utils.json_to_sheet(detailedData);
+        XLSX.utils.book_append_sheet(wb, ws1, 'Histórico Consumo');
+
+        const ws2 = XLSX.utils.json_to_sheet(summaryData);
+        XLSX.utils.book_append_sheet(wb, ws2, 'Resumo por Veículo');
+
+        const fileName = `consumo_combustivel_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+
+        showNotification(`✅ Relatório exportado: ${fileName}`, 'success');
+    } catch (error) {
+        console.error('Erro na exportação:', error);
+        showNotification('Erro ao exportar relatório!', 'error');
     }
 }
 
@@ -1045,7 +1149,6 @@ function loadRecentActivities() {
                 ${currentRole === 'supervisor' && req.status === 'signed' ? `
                     <button class="btn btn-small btn-success" onclick="completeFuelRecord('${req.id}')">⛽</button>
                 ` : ''}
-                <!-- BOTÃO PARA DELETAR REQUISIÇÃO - VISÍVEL APENAS PARA SUPERVISOR -->
                 ${currentRole === 'supervisor' ? `
                     <button class="btn btn-small btn-danger" onclick="deleteRequest('${req.id}')" title="Deletar requisição">🗑️</button>
                 ` : ''}
@@ -1091,7 +1194,6 @@ function loadAllRequests() {
                 ${currentRole === 'supervisor' && req.status === 'signed' ? `
                     <button class="btn btn-small btn-success" onclick="completeFuelRecord('${req.id}')">⛽</button>
                 ` : ''}
-                <!-- BOTÃO PARA DELETAR REQUISIÇÃO - VISÍVEL APENAS PARA SUPERVISOR -->
                 ${currentRole === 'supervisor' ? `
                     <button class="btn btn-small btn-danger" onclick="deleteRequest('${req.id}')" title="Deletar requisição">🗑️</button>
                 ` : ''}
@@ -1102,13 +1204,9 @@ function loadAllRequests() {
 
 function loadFuelRecords() {
     const tbody = document.getElementById('fuel-records-table');
-    if (!tbody) {
-        console.warn('Tabela fuel-records-table não encontrada');
-        return;
-    }
+    if (!tbody) return;
 
     if (!Array.isArray(fuelRecords)) {
-        console.error('fuelRecords não é um array:', fuelRecords);
         tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; color: #ef4444; padding: 40px;">Erro ao carregar registros</td></tr>';
         return;
     }
@@ -1143,7 +1241,6 @@ function loadFuelRecords() {
                 ${record.status === 'completed' ? `
                     <button class="btn btn-small btn-warning" onclick="editFuelRecord('${record.requestId}')">✏️</button>
                 ` : ''}
-                <!-- BOTÃO PARA DELETAR REGISTRO - VISÍVEL APENAS PARA SUPERVISOR -->
                 ${currentRole === 'supervisor' ? `
                     <button class="btn btn-small btn-danger" onclick="deleteRequest('${record.requestId}')" title="Deletar registro">🗑️</button>
                 ` : ''}
@@ -1151,19 +1248,13 @@ function loadFuelRecords() {
         </tr>
     `;
     }).join('');
-
-    console.log('✅ Fuel records carregados:', fuelRecords.length);
 }
 
 function loadVehicles() {
     const tbody = document.getElementById('vehicles-table');
-    if (!tbody) {
-        console.warn('Tabela vehicles-table não encontrada');
-        return;
-    }
+    if (!tbody) return;
 
     if (!Array.isArray(vehicles)) {
-        console.error('vehicles não é um array:', vehicles);
         tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #ef4444; padding: 40px;">Erro ao carregar veículos</td></tr>';
         return;
     }
@@ -1189,8 +1280,6 @@ function loadVehicles() {
             </td>
         </tr>
     `).join('');
-
-    console.log('✅ Veículos carregados:', vehicles.length);
 }
 
 // ==================== FUNÇÕES DE RELATÓRIOS ====================
@@ -1275,7 +1364,7 @@ function updateCurrentDate() {
 }
 
 function showScreen(screenId) {
-    if (currentRole === 'motorista' && ['vehicles', 'reports', 'fuel-records', 'fuel-prices'].includes(screenId)) {
+    if (currentRole === 'motorista' && ['vehicles', 'reports', 'fuel-records', 'fuel-prices', 'fuel-consumption'].includes(screenId)) {
         showNotification('Acesso negado!', 'error');
         return;
     }
@@ -1299,7 +1388,6 @@ function showScreen(screenId) {
         }
     });
 
-    // Carregar dados específicos da tela
     console.log(`📺 Mudando para tela: ${screenId}`);
 
     switch(screenId) {
@@ -1307,20 +1395,20 @@ function showScreen(screenId) {
             loadAllRequests();
             break;
         case 'fuel-records':
-            console.log('📄 Carregando fuel-records...');
             loadFuelRecords();
             break;
         case 'fuel-prices':
-            console.log('📄 Carregando fuel-prices...');
             loadFuelPrices();
             break;
         case 'vehicles':
-            console.log('📄 Carregando vehicles...');
             loadVehicles();
             break;
         case 'reports':
             loadReportFilters();
             generateReport();
+            break;
+        case 'fuel-consumption':
+            loadFuelConsumption();
             break;
     }
 }
@@ -1332,7 +1420,8 @@ function getScreenName(screenId) {
         'fuel-records': '⛽',
         'fuel-prices': '💰',
         'vehicles': '🚚',
-        'reports': '📈'
+        'reports': '📈',
+        'fuel-consumption': '⛽'
     };
     return screenNames[screenId] || '';
 }
@@ -1365,8 +1454,7 @@ function updateStats() {
 function newRequest() {
     updateDriverName();
     document.getElementById('modal-new-request').classList.add('active');
-    
-    // Forçar atualização dos selects
+
     setTimeout(() => {
         populateSelects();
     }, 100);
@@ -1393,7 +1481,7 @@ function viewRequest(reqId) {
 
     alert(`
 📋 DETALHES DA REQUISIÇÃO ${reqId}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 👤 Motorista: ${request.driver}
 🚚 Veículo: ${request.vehicle}
 🏙️ Cidade: ${request.city || 'N/A'}
@@ -1419,7 +1507,7 @@ function viewFuelRecord(reqId) {
 
     alert(`
 ⛽ REGISTRO DE ABASTECIMENTO ${reqId}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 👤 Motorista: ${record.driver}
 🚚 Veículo: ${record.vehicle}
 ⛽ Posto: ${record.gasStation}
