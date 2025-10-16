@@ -94,7 +94,7 @@ function initDatabase() {
 // Inserir veículos iniciais - SEMPRE executar
 function insertInitialVehicles() {
     console.log('🔄 Inserindo veículos iniciais...');
-    
+
     const vehicles = [
         ['BCQ0937', 'F4000', '2023', 'Ativo', 'Branca', 0, 'Nunca'],
         ['JJB4E57', 'CARGO 1217', '2002', 'Ativo', 'Branco', 0, 'Nunca'],
@@ -134,10 +134,10 @@ function insertInitialVehicles() {
             console.error('Erro ao limpar veículos:', err);
         } else {
             console.log('✅ Tabela de veículos limpa');
-            
+
             // Inserir todos os veículos
             const stmt = db.prepare('INSERT OR REPLACE INTO vehicles VALUES (?, ?, ?, ?, ?, ?, ?)');
-            
+
             let insertedCount = 0;
             vehicles.forEach((vehicle) => {
                 stmt.run(vehicle, (err) => {
@@ -145,9 +145,8 @@ function insertInitialVehicles() {
                         console.error(`❌ Erro ao inserir veículo ${vehicle[0]}:`, err);
                     } else {
                         insertedCount++;
-                        console.log(`✅ Veículo ${vehicle[0]} inserido`);
                     }
-                    
+
                     // Finalizar após o último veículo
                     if (insertedCount === vehicles.length) {
                         stmt.finalize();
@@ -162,7 +161,7 @@ function insertInitialVehicles() {
 // Inserir preços iniciais - SEMPRE executar
 function insertInitialPrices() {
     console.log('🔄 Inserindo preços iniciais...');
-    
+
     const prices = [
         ['Diesel S10', 6.69],
         ['Diesel Comum', 6.10],
@@ -173,16 +172,16 @@ function insertInitialPrices() {
     ];
 
     const now = new Date().toISOString();
-    
+
     // Limpar tabela de preços
     db.run('DELETE FROM fuel_prices', (err) => {
         if (err) {
             console.error('Erro ao limpar preços:', err);
         } else {
             console.log('✅ Tabela de preços limpa');
-            
+
             const stmt = db.prepare('INSERT OR REPLACE INTO fuel_prices VALUES (?, ?, ?)');
-            
+
             let insertedCount = 0;
             prices.forEach((price) => {
                 stmt.run(price[0], price[1], now, (err) => {
@@ -190,9 +189,8 @@ function insertInitialPrices() {
                         console.error(`❌ Erro ao inserir preço ${price[0]}:`, err);
                     } else {
                         insertedCount++;
-                        console.log(`✅ Preço ${price[0]} inserido: R$ ${price[1]}`);
                     }
-                    
+
                     // Finalizar após o último preço
                     if (insertedCount === prices.length) {
                         stmt.finalize();
@@ -293,7 +291,7 @@ app.delete('/api/requests/:id', (req, res) => {
                 res.status(500).json({ error: err.message });
                 return;
             }
-            
+
             // Depois deletar a requisição
             db.run('DELETE FROM requests WHERE id = ?', [id], function(err) {
                 if (err) {
@@ -405,6 +403,117 @@ app.put('/api/fuel-prices', (req, res) => {
     });
 });
 
+// ==================== NOVAS ROTAS: CONSUMO MÉDIO ====================
+
+// GET - Calcular consumo médio por veículo (histórico completo)
+app.get('/api/fuel-consumption', (req, res) => {
+    const query = `
+        WITH RankedRequests AS (
+            SELECT 
+                r.*,
+                ROW_NUMBER() OVER (PARTITION BY r.plate ORDER BY r.date DESC, r.createdAt DESC) as rn
+            FROM requests r
+            WHERE r.status = 'completed' AND r.km IS NOT NULL AND r.liters IS NOT NULL
+        ),
+        ConsumptionCalc AS (
+            SELECT 
+                curr.plate,
+                curr.vehicle,
+                curr.driver,
+                curr.date as currentDate,
+                prev.date as previousDate,
+                curr.km as currentKm,
+                prev.km as previousKm,
+                (curr.km - prev.km) as kmDriven,
+                CAST(REPLACE(REPLACE(curr.liters, ' L', ''), ',', '.') AS REAL) as litersUsed,
+                curr.fuelType,
+                curr.gasStation,
+                curr.realValue,
+                curr.id as requestId,
+                CASE 
+                    WHEN (curr.km - prev.km) > 0 AND CAST(REPLACE(REPLACE(curr.liters, ' L', ''), ',', '.') AS REAL) > 0
+                    THEN ROUND((curr.km - prev.km) / CAST(REPLACE(REPLACE(curr.liters, ' L', ''), ',', '.') AS REAL), 2)
+                    ELSE NULL
+                END as avgConsumption
+            FROM RankedRequests curr
+            LEFT JOIN RankedRequests prev ON curr.plate = prev.plate AND prev.rn = curr.rn + 1
+            WHERE curr.rn >= 1
+        )
+        SELECT * FROM ConsumptionCalc 
+        WHERE avgConsumption IS NOT NULL AND kmDriven > 0
+        ORDER BY currentDate DESC
+    `;
+
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error('Erro ao calcular consumo:', err);
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json(rows);
+    });
+});
+
+// GET - Resumo de consumo por veículo (última média de cada veículo)
+app.get('/api/fuel-consumption/summary', (req, res) => {
+    const query = `
+        WITH RankedRequests AS (
+            SELECT 
+                r.*,
+                ROW_NUMBER() OVER (PARTITION BY r.plate ORDER BY r.date DESC, r.createdAt DESC) as rn
+            FROM requests r
+            WHERE r.status = 'completed' AND r.km IS NOT NULL AND r.liters IS NOT NULL
+        ),
+        LatestConsumption AS (
+            SELECT 
+                curr.plate,
+                curr.vehicle,
+                curr.date as lastFuelDate,
+                curr.km as currentKm,
+                prev.km as previousKm,
+                (curr.km - prev.km) as kmDriven,
+                CAST(REPLACE(REPLACE(curr.liters, ' L', ''), ',', '.') AS REAL) as litersUsed,
+                curr.fuelType,
+                CASE 
+                    WHEN (curr.km - prev.km) > 0 AND CAST(REPLACE(REPLACE(curr.liters, ' L', ''), ',', '.') AS REAL) > 0
+                    THEN ROUND((curr.km - prev.km) / CAST(REPLACE(REPLACE(curr.liters, ' L', ''), ',', '.') AS REAL), 2)
+                    ELSE NULL
+                END as lastAvgConsumption
+            FROM RankedRequests curr
+            LEFT JOIN RankedRequests prev ON curr.plate = prev.plate AND prev.rn = curr.rn + 1
+            WHERE curr.rn = 1
+        )
+        SELECT 
+            plate,
+            vehicle,
+            lastFuelDate,
+            currentKm,
+            previousKm,
+            kmDriven,
+            litersUsed,
+            fuelType,
+            lastAvgConsumption,
+            CASE
+                WHEN lastAvgConsumption >= 8 THEN 'Excelente'
+                WHEN lastAvgConsumption >= 6 THEN 'Bom'
+                WHEN lastAvgConsumption >= 4 THEN 'Regular'
+                ELSE 'Atenção'
+            END as performance
+        FROM LatestConsumption 
+        WHERE lastAvgConsumption IS NOT NULL AND kmDriven > 0
+        ORDER BY lastAvgConsumption DESC
+    `;
+
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error('Erro ao buscar resumo:', err);
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json(rows);
+    });
+});
+
 // Servir o frontend
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -412,8 +521,8 @@ app.get('/', (req, res) => {
 
 // Rota de saúde para verificar se o servidor está rodando
 app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
+    res.json({
+        status: 'OK',
         message: 'Sistema Rezende Energia está funcionando',
         timestamp: new Date().toISOString()
     });
@@ -436,6 +545,7 @@ app.listen(PORT, () => {
    💾 Banco de dados: SQLite (rezende_energia.db)
    🚗 Veículos: 30 cadastrados automaticamente
    ⛽ Preços: 6 combustíveis cadastrados
+   📊 Consumo Médio: Ativado
    ✅ Sistema pronto para uso!
 ========================================
     `);
