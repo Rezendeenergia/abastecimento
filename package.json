@@ -1,7 +1,7 @@
 {
   "name": "rezende-energia-sistema",
-  "version": "1.0.0",
-  "description": "Sistema de Gestão de Abastecimento - Rezende Energia",
+  "version": "2.0.0",
+  "description": "Sistema de Gestão de Abastecimento - Rezende Energia com Análise de Consumo",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -12,7 +12,8 @@
     "abastecimento",
     "gestao",
     "combustivel",
-    "sqlite"
+    "sqlite",
+    "consumo-medio"
   ],
   "author": "Rezende Energia",
   "license": "MIT",
